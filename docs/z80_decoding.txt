@@ -1,0 +1,28 @@
+Inspired by http://www.classiccmp.org/dunfield/r/8080.txt
+
+DDD = 3 bit source/destination code
+BBB = bit id (0 to 7)
+
+Rotate left (rl[c])
+C = 1 when NO carry
+000C 0DDD
+
+Rotate right (rr[c])
+C = 1 when NO carry
+000C 1DDD
+
+Test bit
+01BB BDDD
+
+Reset bit
+10BB BDDD
+
+Set bit
+11BB BDDD
+
+Shift left (sl[a/l])
+L = 1 when logical, otherwise arithmetic
+001L 0DDD
+
+Shift right (sr[a/l])
+001L 1DDD
