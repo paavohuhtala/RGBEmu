@@ -40,11 +40,12 @@ impl MMU {
       ROM_BANK_N_START ... ROM_BANK_N_END => CartridgeLocation(RomBankN(address - ROM_BANK_N_START)),
       RAM_BANK_0_START ... RAM_BANK_0_END => RamBank0(address - RAM_BANK_0_START),
       RAM_BANK_N_START ... RAM_BANK_N_END => RamBankN(address - RAM_BANK_N_START),
+      VRAM_START       ... VRAM_END       => Vram(address - VRAM_START),
       otherwise => MemoryLocation::Invalid(otherwise)
     }
   }
 
-  pub fn read8(&self, location: MemoryLocation) -> u8 {
+  pub fn read_8(&self, location: MemoryLocation) -> u8 {
     match location {
       MemoryLocation::Bootrom(offset) => if let Some(ref bootrom) = self.bootrom {bootrom[offset as usize]} else {0},
       MemoryLocation::RamBank0(offset) => self.ram[offset as usize],
@@ -52,7 +53,7 @@ impl MMU {
       MemoryLocation::Vram(offset) => self.vram[self.selected_vram_bank * VRAM_BANK_SIZE + (offset as usize)],
       MemoryLocation::CartridgeLocation(cartridge_location) => {
         if let Some(ref cartridge) = self.cartridge {
-          cartridge.read8(cartridge_location)
+          cartridge.read_8(cartridge_location)
         } else {
           panic!("Tried to read from cartridge when one isn't inserted.")
         }
@@ -61,17 +62,21 @@ impl MMU {
     }
   }
 
+  pub fn read_addr_8(&self, address: u16) -> u8 {
+    self.read_8(self.resolve_address(address))
+  }
+
   pub fn read_to_buffer(&self, buffer: &mut [u8], address: u16, length: u16) {
     if buffer.len() < (length as usize) {
       panic!("Tried to read {} bytes to a buffer sized {}.", buffer.len(), length);
     }
 
     for i in 0 .. length {
-      buffer[i as usize] = self.read8(self.resolve_address(address + i));
+      buffer[i as usize] = self.read_8(self.resolve_address(address + i));
     }
   } 
 
-  pub fn write8(&mut self, location: MemoryLocation, value: u8) {
+  pub fn write_8(&mut self, location: MemoryLocation, value: u8) {
     match location {
       MemoryLocation::Bootrom(_) => (),
       MemoryLocation::RamBank0(offset) => self.ram[offset as usize] = value,
@@ -79,11 +84,16 @@ impl MMU {
       MemoryLocation::Vram(offset) => self.vram[self.selected_vram_bank * VRAM_BANK_SIZE + (offset as usize)] = value,
       MemoryLocation::CartridgeLocation(cartridge_location) => {
         match self.cartridge {
-          Some(ref cartridge) => cartridge.write8(cartridge_location, value),
+          Some(ref cartridge) => cartridge.write_8(cartridge_location, value),
           None => panic!("Tried to read from cartridge when one isn't inserted.")
         }
       }
       MemoryLocation::Invalid(e) => panic!("Tried to write to an invalid memory location: 0x{:X}", e)
     }
+  }
+
+  pub fn write_addr_8(&mut self, address: u16, value: u8) {
+    let location = self.resolve_address(address);
+    self.write_8(location, value);
   }
 }

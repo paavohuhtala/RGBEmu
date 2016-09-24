@@ -15,6 +15,8 @@ pub const ROM_BANK_N_START: u16    = 0x4000;
 pub const ROM_BANK_N_END: u16      = ROM_BANK_N_START + ROM_BANK_SIZE as u16 - 1;
 
 pub const VRAM_START: u16          = 0x8000;
+pub const VRAM_END: u16            = VRAM_START + VRAM_BANK_SIZE as u16 - 1;
+
 pub const CARTRIDGE_RAM_START: u16 = 0xA000;
 
 pub const RAM_BANK_0_START: u16    = 0xC000;

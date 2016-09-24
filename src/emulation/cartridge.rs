@@ -10,11 +10,11 @@ impl Cartridge {
     None
   }
 
-  pub fn read8(&self, location: CartridgeMemoryLocation) -> u8 {
+  pub fn read_8(&self, location: CartridgeMemoryLocation) -> u8 {
     unimplemented!()
   }
 
-  pub fn write8(&self, location: CartridgeMemoryLocation, value: u8) {
+  pub fn write_8(&self, location: CartridgeMemoryLocation, value: u8) {
     unimplemented!()
   }
 }

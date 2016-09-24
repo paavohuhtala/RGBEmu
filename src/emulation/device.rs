@@ -5,6 +5,7 @@ use emulation::mmu::{MMU};
 use emulation::instruction::{Instruction};
 
 use emulation::instruction_decoder::*;
+use emulation::interpreter;
 
 pub enum DeviceType {
   GameBoy,
@@ -63,13 +64,12 @@ impl Device {
   }
 
   pub fn simulate_bootrom(&mut self) {
-    self.regs
-    .set_pc(0x100)
-    .set_sp(0xFFFE)
-    .set_af(0x01B0)
-    .set_bc(0x0013)
-    .set_de(0x00D8)
-    .set_hl(0x014d);
+    self.regs.pc = 0x100;
+    self.regs.sp = 0xFFFE;
+    self.regs.set_af(0x01B0);
+    self.regs.set_bc(0x0013);
+    self.regs.set_de(0x00D8);
+    self.regs.set_hl(0x014d);
   }
 
   pub fn new_gbc(bootrom: Option<Vec<u8>>) -> Device { Device::new(DeviceType::GameBoyColor, bootrom) }
@@ -77,7 +77,7 @@ impl Device {
   pub fn read_next_byte(&mut self) -> u8 {
     let pc = self.regs.pc;
     self.regs.pc += 1;
-    self.memory.read8(self.memory.resolve_address(pc))
+    self.memory.read_8(self.memory.resolve_address(pc))
   }
 
   // Partially based on:
@@ -87,8 +87,7 @@ impl Device {
   }
 
   pub fn run_cycle(&mut self) {
-    let instr = self.decode_next_instruction();
-    println!("{:?}", instr);
+    interpreter::run_cycle(self);
   }
 }
 

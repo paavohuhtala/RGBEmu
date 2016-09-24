@@ -25,10 +25,14 @@ macro_rules! set_16 {
 
 #[repr(u8)]
 pub enum StatusFlag {
-  Carry     = 0b0001_0000,
-  HalfCarry = 0b0010_0000,
-  Subtract  = 0b0100_0000,
-  Zero      = 0b1000_0000
+  C  = 0b0000_0001,
+  N  = 0b0000_0010,
+  PV = 0b0000_0100,
+  F3 = 0b0000_1000,
+  H  = 0b0001_0000,
+  F5 = 0b0010_0000,
+  Z  = 0b0100_0000,
+  S  = 0b1000_0000
 } 
 
 impl Registers {
@@ -47,12 +51,24 @@ impl Registers {
     }
   }
 
+  pub fn get_flag(&self, flag: StatusFlag) -> bool {
+    self.f & flag as u8 != 0
+  }
+
   pub fn set_flag(&mut self, flag: StatusFlag) {
     self.f |= flag as u8
   }
 
   pub fn clear_flag(&mut self, flag: StatusFlag) {
     self.f &= !(flag as u8)
+  }
+
+  pub fn set_flag_to(&mut self, flag: StatusFlag, to: bool) {
+    if to {
+      self.set_flag(flag)
+    } else {
+      self.clear_flag(flag)
+    }
   }
 
   pub fn af(&self) -> u16 {
@@ -71,33 +87,19 @@ impl Registers {
     get_16!(self, h, l)
   }
 
-  pub fn set_af(&mut self, value: u16) -> &mut Registers {
+  pub fn set_af(&mut self, value: u16) {
     set_16!(self, a, f, value);
-    self
   }
   
-  pub fn set_bc(&mut self, value: u16) -> &mut Registers {
+  pub fn set_bc(&mut self, value: u16) {
     set_16!(self, b, c, value);
-    self
   }
 
-  pub fn set_de(&mut self, value: u16) -> &mut Registers {
+  pub fn set_de(&mut self, value: u16) {
     set_16!(self, d, e, value);
-    self
   }
 
-  pub fn set_hl(&mut self, value: u16) -> &mut Registers {
+  pub fn set_hl(&mut self, value: u16) {
     set_16!(self, h, l, value);
-    self
-  }
-
-  pub fn set_pc(&mut self, value: u16) -> &mut Registers {
-    self.pc = value;
-    self
-  }
-
-  pub fn set_sp(&mut self, value: u16) -> &mut Registers {
-    self.pc = value;
-    self
   }
 }

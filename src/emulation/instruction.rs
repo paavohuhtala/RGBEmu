@@ -1,5 +1,5 @@
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Operand {
   A,
   B,
@@ -8,8 +8,11 @@ pub enum Operand {
   E,
   H,
   L,
-  MemoryReference
+  MemoryReference,
+  Immediate(u8)
 }
+
+impl Copy for Operand {}
 
 impl Operand {
   pub fn decode(value: u8) -> Option<Operand> {
@@ -23,6 +26,13 @@ impl Operand {
       0b101 => Some(Operand::L),
       0b110 => Some(Operand::MemoryReference),
       _     => None
+    }
+  }
+
+  pub fn is_memref(self) -> bool {
+    match self {
+      Operand::MemoryReference => true,
+      _ => false
     }
   }
 }
@@ -43,29 +53,6 @@ impl RegisterPair {
       0b10 => Some(RegisterPair::HL),
       0b11 => Some(RegisterPair::SP),
       _    => None
-    }
-  }
-
-  pub fn as_bc_or_de(self) -> Option<BCOrDE> {
-    match self {
-      RegisterPair::BC => Some(BCOrDE::BC),
-      RegisterPair::DE => Some(BCOrDE::DE),
-      _ => None
-    }
-  }
-}
-
-#[derive(Debug, PartialEq)]
-pub enum BCOrDE {
-  BC,
-  DE
-}
-
-impl BCOrDE {
-  pub fn as_register_pair(self) -> RegisterPair {
-    match self {
-      BCOrDE::BC => RegisterPair::BC,
-      BCOrDE::DE => RegisterPair::DE
     }
   }
 }
@@ -91,7 +78,6 @@ impl ConditionCode {
 #[derive(Debug, PartialEq)]
 pub enum Instruction {
   MoveOperand8 {to: Operand, from: Operand},
-  MoveImmediate8 {to: Operand, value: u8},
   MoveImmediate16 {to: RegisterPair, value: u16},
   LoadA(u16),
   StoreA(u16),
@@ -99,19 +85,15 @@ pub enum Instruction {
   StoreAIndirectHLIncrement,
   LoadAIndirectHLDecrement,
   StoreAIndirectHLDecrement,
-  LoadAIndirect(BCOrDE),
-  StoreAIndirect(BCOrDE),
+  LoadAIndirect(RegisterPair),
+  StoreAIndirect(RegisterPair),
   LoadAHigh(u8),
   StoreAHigh(u8),
   StoreAHighC,
   AddOperandToA(Operand),
-  AddImmediateToA(u8),
   AddOperandToACarry(Operand),
-  AddImmediateToACarry(u8),
   SubtractOperandFromA(Operand),
-  SubtractImmediateFromA(u8),
   SubtractOperandFromABorrow(Operand),
-  SubtractImmediateFromABorrow(u8),
   IncrementOperand8(Operand),
   DecrementOperand8(Operand),
   IncrementOperand16(RegisterPair),
@@ -119,13 +101,9 @@ pub enum Instruction {
   AddOperandToHL(RegisterPair),
   BCDCorrectA,
   AndOperandWithA(Operand),
-  AndImmediateWithA(u8),
   OrOperandWithA(Operand),
-  OrImmediateWithA(u8),
   XorOperandWithA(Operand),
-  XorImmediateWithA(u8),
   CompareOperandWithA(Operand),
-  CompareImmediateWithA(u8),
   RotateALeft,
   RotateARight,
   RotateALeftCarry,
