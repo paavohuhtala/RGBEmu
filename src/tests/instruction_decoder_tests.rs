@@ -26,9 +26,13 @@ impl MockDevice {
   }
 }
 
-fn verify_instruction(expected: Instruction, bytes: Vec<u8>) {
+fn decode_bytes(bytes: Vec<u8>) -> Instruction {
   let mut device = MockDevice::from_bytes(bytes);
-  let instruction = decode_instruction(&mut device);
+  decode_instruction(&mut device)
+}
+
+fn verify_instruction(expected: Instruction, bytes: Vec<u8>) {
+  let instruction = decode_bytes(bytes);
   assert_eq!(expected, instruction);
 }
 
@@ -39,4 +43,31 @@ pub fn random_instructions() {
   verify_instruction(MoveOperand8 {to: Operand::MemoryReference, from: Operand::L}, vec![0x75]);
   verify_instruction(Instruction::SetBit(4, Operand::D), vec![0xCB, 0xE2]);
   verify_instruction(Instruction::SubtractOperandFromABorrow(Operand::A), vec![0x9F]);
+}
+
+use std::panic::catch_unwind;
+
+#[test]
+pub fn removed_instructions_should_panic() {
+  let removed_instructions = vec![
+    vec![0xD3],
+    vec![0xDB],
+    vec![0xDD],
+    vec![0xE3],
+    vec![0xE4],
+    vec![0xEB],
+    vec![0xEC],
+    vec![0xF2],
+    vec![0xF4],
+    vec![0xFC],
+    vec![0xFD]];
+
+  for i in removed_instructions {
+    let i_copy = i.clone();
+    let decoded = catch_unwind(||decode_bytes(i));
+
+    if decoded.is_ok() {
+      panic!("Trying to decode instruction {:?} should've paniced, but was {:?}.", i_copy, decoded.unwrap());
+    }
+  }
 }
