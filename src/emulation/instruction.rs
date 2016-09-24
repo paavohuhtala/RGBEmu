@@ -1,5 +1,5 @@
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Operand {
   A,
   B,
@@ -27,7 +27,7 @@ impl Operand {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum RegisterPair {
   BC,
   DE,
@@ -55,7 +55,7 @@ impl RegisterPair {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum BCOrDE {
   BC,
   DE
@@ -70,7 +70,7 @@ impl BCOrDE {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ConditionCode {
   Zero(bool),
   Carry(bool)
@@ -88,7 +88,7 @@ impl ConditionCode {
   }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Instruction {
   MoveOperand8 {to: Operand, from: Operand},
   MoveImmediate8 {to: Operand, value: u8},

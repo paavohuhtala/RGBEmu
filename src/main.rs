@@ -7,6 +7,9 @@
 
 #![allow(wrong_self_convention)]
 
+#[cfg(test)]
+mod tests;
+
 use std::io::prelude::*;
 use std::fs::File;
 
@@ -18,7 +21,6 @@ use sfml::window::event::Event;
 use sfml::system::{Vector2u};
 
 mod emulation;
-
 use emulation::device::Device;
 
 macro_rules! times {
