@@ -39,10 +39,10 @@ fn verify_instruction(expected: Instruction, bytes: Vec<u8>) {
 #[test]
 pub fn random_instructions() {
   verify_instruction(Nop, vec![0]);
-  verify_instruction(OrOperandWithA(Operand::B), vec![0xB0]);
-  verify_instruction(MoveOperand8 {to: Operand::MemoryReference, from: Operand::L}, vec![0x75]);
-  verify_instruction(Instruction::SetBit(4, Operand::D), vec![0xCB, 0xE2]);
-  verify_instruction(Instruction::SubtractOperandFromABorrow(Operand::A), vec![0x9F]);
+  verify_instruction(OrOperandWithA(Operand8::B), vec![0xB0]);
+  verify_instruction(MoveOperand8 {to: Operand8::MemoryReference, from: Operand8::L}, vec![0x75]);
+  verify_instruction(Instruction::SetBit(4, Operand8::D), vec![0xCB, 0xE2]);
+  verify_instruction(Instruction::SubtractOperandFromABorrow(Operand8::A), vec![0x9F]);
 }
 
 use std::panic::catch_unwind;

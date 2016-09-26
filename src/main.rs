@@ -38,7 +38,10 @@ fn main() {
   File::open("DMG_ROM.bin").unwrap().read_to_end(&mut rom_buffer).unwrap();
 
   let mut device = Device::new_gbc(Some(rom_buffer));
-  times!(255, {device.run_cycle()});
+
+  loop {
+    device.run_cycle()
+  }
 
   //device.run_cycle();
 

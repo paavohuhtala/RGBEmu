@@ -3,20 +3,21 @@ use emulation::bitutils::*;
 use emulation::device::Device;
 use emulation::registers::StatusFlag;
 use emulation::instruction_decoder::decode_instruction;
-use emulation::instruction::{Operand, RegisterPair, ConditionCode};
+use emulation::instruction::{Operand8, Operand16, ConditionCode};
 use emulation::instruction::Instruction::*;
-use emulation::instruction::Operand::*;
-use emulation::instruction::RegisterPair::*;
+use emulation::instruction::Operand8::*;
+use emulation::instruction::Operand16::*;
+use emulation::address_mapper::AddressMapper;
 
 trait ReadWriteRegisters {
-  fn get_operand_8(&self, operand: Operand) -> u8;
-  fn get_operand_16(&self, operand: RegisterPair) -> u16;
-  fn set_operand_8(&mut self, operand: Operand, value: u8);
-  fn set_operand_16(&mut self, operand: RegisterPair, value: u16);
+  fn get_operand_8(&self, operand: Operand8) -> u8;
+  fn get_operand_16(&self, operand: Operand16) -> u16;
+  fn set_operand_8(&mut self, operand: Operand8, value: u8);
+  fn set_operand_16(&mut self, operand: Operand16, value: u16);
 }
 
 impl ReadWriteRegisters for Device {
-  fn get_operand_8(&self, operand: Operand) -> u8 {
+  fn get_operand_8(&self, operand: Operand8) -> u8 {
     match operand {
       A => self.regs.a,
       B => self.regs.b,
@@ -30,7 +31,7 @@ impl ReadWriteRegisters for Device {
     }
   }
 
-  fn set_operand_8(&mut self, operand: Operand, value: u8) {
+  fn set_operand_8(&mut self, operand: Operand8, value: u8) {
     match operand {
       A => self.regs.a = value,
       B => self.regs.b = value,
@@ -47,8 +48,8 @@ impl ReadWriteRegisters for Device {
     }
   }
 
-  fn get_operand_16(&self, register_pair: RegisterPair) -> u16 {
-    match register_pair {
+  fn get_operand_16(&self, operand_16: Operand16) -> u16 {
+    match operand_16 {
       BC => self.regs.bc(),
       DE => self.regs.de(),
       HL => self.regs.hl(),
@@ -56,8 +57,8 @@ impl ReadWriteRegisters for Device {
     }
   }
 
-  fn set_operand_16(&mut self, register_pair: RegisterPair, value: u16) {
-    match register_pair {
+  fn set_operand_16(&mut self, operand_16: Operand16, value: u16) {
+    match operand_16 {
       BC => self.regs.set_bc(value),
       DE => self.regs.set_de(value),
       HL => self.regs.set_hl(value),
@@ -77,7 +78,7 @@ pub fn run_cycle(device: &mut Device) -> i32 {
   let instruction = decode_instruction(device);
   println!("{:?}", instruction);
   match instruction {
-    MoveImmediate16 {to, value} => { device.set_operand_16(to, value); 10 },
+    MoveImmediate16 {to, value} => { device.set_operand_16(to, value); 12 },
     XorOperandWithA(operand) => {
       let a = device.get_operand_8(A);
       let res = a ^ device.get_operand_8(operand);
@@ -87,7 +88,7 @@ pub fn run_cycle(device: &mut Device) -> i32 {
       device.regs.clear_flag(StatusFlag::H);
       device.regs.clear_flag(StatusFlag::C);
 
-      if operand.is_memref() {8} else {4}
+      if operand.is_memref() || operand.is_immediate() {8} else {4}
     },
     StoreAIndirectHLDecrement => {
       let a = device.get_operand_8(A);
@@ -100,6 +101,19 @@ pub fn run_cycle(device: &mut Device) -> i32 {
       let op = device.get_operand_8(operand);
       device.regs.set_flag_to(StatusFlag::Z, get_nth_bit(op, n) == 0);
       8
+    },
+    ConditionalRelativeJump(condition, offset) => {
+      if check_condition(device, condition) {
+        device.regs.pc = (device.regs.pc as i32 + offset as i32) as u16;
+        12
+      } else {
+        8
+      }
+    },
+    MoveOperand8 {to, from} => {
+      let value = device.get_operand_8(from);
+      device.set_operand_8(to, value);
+      4
     },
     _ => panic!("Unimplemented instruction: {:?}", instruction)
   }

@@ -30,4 +30,6 @@ pub const ECHO_RAM_END: u16        = 0xFDFF;
 pub const OAM_START: u16           = 0xFE00;
 pub const OAM_END: u16             = 0xFE9F;
 pub const IO_START: u16            = 0xFF00;
+pub const AUDIO_START: u16         = 0xFF10;
+pub const AUDIO_END: u16           = 0xFF3F;
 pub const IO_END: u16              = 0xFF7F;

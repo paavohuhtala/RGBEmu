@@ -1,6 +1,6 @@
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum Operand {
+pub enum Operand8 {
   A,
   B,
   C,
@@ -12,46 +12,53 @@ pub enum Operand {
   Immediate(u8)
 }
 
-impl Copy for Operand {}
+impl Copy for Operand8 {}
 
-impl Operand {
-  pub fn decode(value: u8) -> Option<Operand> {
+impl Operand8 {
+  pub fn decode(value: u8) -> Option<Operand8> {
     match value {
-      0b111 => Some(Operand::A),
-      0b000 => Some(Operand::B),
-      0b001 => Some(Operand::C),
-      0b010 => Some(Operand::D),
-      0b011 => Some(Operand::E),
-      0b100 => Some(Operand::H),
-      0b101 => Some(Operand::L),
-      0b110 => Some(Operand::MemoryReference),
+      0b111 => Some(Operand8::A),
+      0b000 => Some(Operand8::B),
+      0b001 => Some(Operand8::C),
+      0b010 => Some(Operand8::D),
+      0b011 => Some(Operand8::E),
+      0b100 => Some(Operand8::H),
+      0b101 => Some(Operand8::L),
+      0b110 => Some(Operand8::MemoryReference),
       _     => None
     }
   }
 
   pub fn is_memref(self) -> bool {
     match self {
-      Operand::MemoryReference => true,
+      Operand8::MemoryReference => true,
+      _ => false
+    }
+  }
+
+  pub fn is_immediate(self) -> bool {
+    match self {
+      Operand8::Immediate(_) => true,
       _ => false
     }
   }
 }
 
 #[derive(Debug, PartialEq)]
-pub enum RegisterPair {
+pub enum Operand16 {
   BC,
   DE,
   HL,
   SP
 }
 
-impl RegisterPair {
-  pub fn decode(value: u8) -> Option<RegisterPair> {
+impl Operand16 {
+  pub fn decode(value: u8) -> Option<Operand16> {
     match value {
-      0b00 => Some(RegisterPair::BC),
-      0b01 => Some(RegisterPair::DE),
-      0b10 => Some(RegisterPair::HL),
-      0b11 => Some(RegisterPair::SP),
+      0b00 => Some(Operand16::BC),
+      0b01 => Some(Operand16::DE),
+      0b10 => Some(Operand16::HL),
+      0b11 => Some(Operand16::SP),
       _    => None
     }
   }
@@ -77,33 +84,33 @@ impl ConditionCode {
 
 #[derive(Debug, PartialEq)]
 pub enum Instruction {
-  MoveOperand8 {to: Operand, from: Operand},
-  MoveImmediate16 {to: RegisterPair, value: u16},
+  MoveOperand8 {to: Operand8, from: Operand8},
+  MoveImmediate16 {to: Operand16, value: u16},
   LoadA(u16),
   StoreA(u16),
   LoadAIndirectHLIncrement,
   StoreAIndirectHLIncrement,
   LoadAIndirectHLDecrement,
   StoreAIndirectHLDecrement,
-  LoadAIndirect(RegisterPair),
-  StoreAIndirect(RegisterPair),
+  LoadAIndirect(Operand16),
+  StoreAIndirect(Operand16),
   LoadAHigh(u8),
   StoreAHigh(u8),
   StoreAHighC,
-  AddOperandToA(Operand),
-  AddOperandToACarry(Operand),
-  SubtractOperandFromA(Operand),
-  SubtractOperandFromABorrow(Operand),
-  IncrementOperand8(Operand),
-  DecrementOperand8(Operand),
-  IncrementOperand16(RegisterPair),
-  DecrementOperand16(RegisterPair),
-  AddOperandToHL(RegisterPair),
+  AddOperandToA(Operand8),
+  AddOperandToACarry(Operand8),
+  SubtractOperandFromA(Operand8),
+  SubtractOperandFromABorrow(Operand8),
+  IncrementOperand8(Operand8),
+  DecrementOperand8(Operand8),
+  IncrementOperand16(Operand16),
+  DecrementOperand16(Operand16),
+  AddOperandToHL(Operand16),
   BCDCorrectA,
-  AndOperandWithA(Operand),
-  OrOperandWithA(Operand),
-  XorOperandWithA(Operand),
-  CompareOperandWithA(Operand),
+  AndOperandWithA(Operand8),
+  OrOperandWithA(Operand8),
+  XorOperandWithA(Operand8),
+  CompareOperandWithA(Operand8),
   RotateALeft,
   RotateARight,
   RotateALeftCarry,
@@ -121,24 +128,24 @@ pub enum Instruction {
   ConditionalReturn(ConditionCode),
   Restart(u8),
   JumpToHL,
-  Push(RegisterPair),
-  Pop(RegisterPair),
-  MoveToSP(RegisterPair),
+  Push(Operand16),
+  Pop(Operand16),
+  MoveToSP(Operand16),
   EnableInterrupts,
   DisableInterrupts,
   Halt,
   Nop,
-  RotateLeft(Operand),
-  RotateRight(Operand),
-  RotateLeftCarry(Operand),
-  RotateRightCarry(Operand),
-  ShiftLeftArithmetic(Operand),
-  ShiftLeftLogical(Operand),
-  ShiftRightArithmetic(Operand),
-  ShiftRightLogical(Operand),
-  TestBit(u8, Operand),
-  SetBit(u8, Operand),
-  ClearBi(u8, Operand),
+  RotateLeft(Operand8),
+  RotateRight(Operand8),
+  RotateLeftCarry(Operand8),
+  RotateRightCarry(Operand8),
+  ShiftLeftArithmetic(Operand8),
+  ShiftLeftLogical(Operand8),
+  ShiftRightArithmetic(Operand8),
+  ShiftRightLogical(Operand8),
+  TestBit(u8, Operand8),
+  SetBit(u8, Operand8),
+  ClearBi(u8, Operand8),
   AddSignedImmediateToSP(i8),
   Stop  
 }

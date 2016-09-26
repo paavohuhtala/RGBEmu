@@ -1,6 +1,7 @@
 
 use emulation::constants::*;
 use emulation::registers::{Registers};
+use emulation::address_mapper::AddressMapper;
 use emulation::mmu::{MMU};
 use emulation::instruction::{Instruction};
 

@@ -1,6 +1,6 @@
 
 use emulation::bitutils::*;
-use emulation::instruction::{Instruction, Operand, RegisterPair, ConditionCode};
+use emulation::instruction::{Instruction, Operand8, Operand16, ConditionCode};
 use emulation::instruction::Instruction::*;
 
 pub trait ReadOnlyByteStream {
@@ -15,12 +15,12 @@ pub trait ReadOnlyByteStream {
   }
 }
 
-fn as_register_pair(b1: u8, b0: u8) -> RegisterPair {
-  RegisterPair::decode(to_byte_2(b1, b0)).unwrap()
+fn as_operand_16(b1: u8, b0: u8) -> Operand16 {
+  Operand16::decode(to_byte_2(b1, b0)).unwrap()
 }
 
-fn to_operand(b2: u8, b1: u8, b0: u8) -> Operand {
-  Operand::decode(to_byte_3(b2, b1, b0)).unwrap()
+fn to_operand(b2: u8, b1: u8, b0: u8) -> Operand8 {
+  Operand8::decode(to_byte_3(b2, b1, b0)).unwrap()
 }
 
 fn to_condition_code(b2: u8, b1: u8, b0: u8) -> ConditionCode {
@@ -30,7 +30,6 @@ fn to_condition_code(b2: u8, b1: u8, b0: u8) -> ConditionCode {
 pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
   print!("${:04x} ", device.get_stream_position());
   let first_byte = device.read_next_byte();
-  println!("0x{:X}", first_byte);
   let first_bits = to_bit_tuple(first_byte);
 
   match first_bits {
@@ -45,10 +44,10 @@ pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
     (0, 0, d2, d1, d0, 1, 1, 0) => {
       let to = to_operand(d2, d1, d0);
       let immediate = device.read_next_byte();
-      MoveOperand8 {to: to, from: Operand::Immediate(immediate)}
+      MoveOperand8 {to: to, from: Operand8::Immediate(immediate)}
     },
     (0, 0, r1, r0, 0, 0, 0, 1) => {
-      let to = as_register_pair(r1, r0);
+      let to = as_operand_16(r1, r0);
       let immediate = device.read_next_16();
       MoveImmediate16 {to: to, value: immediate}
     },
@@ -58,8 +57,8 @@ pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
     (0, 0, 1, 0, 0, 0, 1, 0) => StoreAIndirectHLIncrement,
     (0, 0, 1, 1, 1, 0, 1, 0) => LoadAIndirectHLDecrement,
     (0, 0, 1, 1, 0, 0, 1, 0) => StoreAIndirectHLDecrement,
-    (0, 0, r1, r0, 1, 0, 1, 0) => LoadAIndirect(as_register_pair(r1, r0)),
-    (0, 0, r1, r0, 0, 0, 1, 0) => StoreAIndirect(as_register_pair(r1, r0)),
+    (0, 0, r1, r0, 1, 0, 1, 0) => LoadAIndirect(as_operand_16(r1, r0)),
+    (0, 0, r1, r0, 0, 0, 1, 0) => StoreAIndirect(as_operand_16(r1, r0)),
     (1, 1, 1, 1, 0, 0, 0, 0) => LoadAHigh(device.read_next_byte()),
     (1, 1, 1, 0, 0, 0, 0, 0) => StoreAHigh(device.read_next_byte()),
     (1, 1, 1, 0, 0, 0, 1, 0) => StoreAHighC,
@@ -74,9 +73,9 @@ pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
     (1, 1, 0, 0, carry, 1, 1, 0) => {
       let immediate = device.read_next_byte();
       if carry == 1 {
-        AddOperandToACarry(Operand::Immediate(immediate))
+        AddOperandToACarry(Operand8::Immediate(immediate))
       } else {
-        AddOperandToA(Operand::Immediate(immediate))
+        AddOperandToA(Operand8::Immediate(immediate))
       }
     },
     (1, 0, 0, 1, carry, s2, s1, s0) => {
@@ -90,9 +89,9 @@ pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
     (1, 1, 0, 1, carry, 1, 1, 0) => {
       let immediate = device.read_next_byte();
       if carry == 1 {
-        SubtractOperandFromABorrow(Operand::Immediate(immediate))
+        SubtractOperandFromABorrow(Operand8::Immediate(immediate))
       } else {
-        SubtractOperandFromA(Operand::Immediate(immediate))
+        SubtractOperandFromA(Operand8::Immediate(immediate))
       }
     },
     (0, 0, d2, d1, d0, 1, 0, decr) => {
@@ -104,23 +103,23 @@ pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
       }
     },
     (0, 0, r1, r0, decr, 0, 1, 1) => {
-      let register_pair = as_register_pair(r1, r0);
+      let operand_16 = as_operand_16(r1, r0);
       if decr == 1 {
-        DecrementOperand16(register_pair)
+        DecrementOperand16(operand_16)
       } else {
-        IncrementOperand16(register_pair)
+        IncrementOperand16(operand_16)
       }
     },
-    (0, 0, r1, r0, 1, 0, 0, 1) => AddOperandToHL(as_register_pair(r1, r0)),
+    (0, 0, r1, r0, 1, 0, 0, 1) => AddOperandToHL(as_operand_16(r1, r0)),
     (0, 0, 1, 0, 0, 1, 1, 1) => BCDCorrectA,
     (1, 0, 1, 0, 0, s2, s1, s0) => AndOperandWithA(to_operand(s2, s1, s0)),
-    (1, 1, 1, 0, 0, 1, 1, 0) => AndOperandWithA(Operand::Immediate(device.read_next_byte())),
+    (1, 1, 1, 0, 0, 1, 1, 0) => AndOperandWithA(Operand8::Immediate(device.read_next_byte())),
     (1, 0, 1, 1, 0, s2, s1, s0) => OrOperandWithA(to_operand(s2, s1, s0)),
-    (1, 1, 1, 1, 0, 1, 1, 0) => OrOperandWithA(Operand::Immediate(device.read_next_byte())),
+    (1, 1, 1, 1, 0, 1, 1, 0) => OrOperandWithA(Operand8::Immediate(device.read_next_byte())),
     (1, 0, 1, 0, 1, s2, s1, s0) => XorOperandWithA(to_operand(s2, s1, s0)),
-    (1, 1, 1, 0, 1, 1, 1, 0) => XorOperandWithA(Operand::Immediate(device.read_next_byte())),
+    (1, 1, 1, 0, 1, 1, 1, 0) => XorOperandWithA(Operand8::Immediate(device.read_next_byte())),
     (1, 0, 1, 1, 1, s2, s1, s0) => CompareOperandWithA(to_operand(s2, s1, s0)),
-    (1, 1, 1, 1, 1, 1, 1, 0) => CompareOperandWithA(Operand::Immediate(device.read_next_byte())),
+    (1, 1, 1, 1, 1, 1, 1, 0) => CompareOperandWithA(Operand8::Immediate(device.read_next_byte())),
     (0, 0, 0, carry, right, 1, 1, 1) => {
       match (carry == 1, right == 1) {
         (false, false) => RotateALeft,
@@ -145,8 +144,8 @@ pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
     (1, 1, c2, c1, c0, 0, 0, 0) => ConditionalReturn(to_condition_code(c2, c1, c0)),
     (1, 1, n2, n1, n0, 1, 1, 1) => Restart(to_byte_3(n2, n1, n0)),
     (1, 1, 1, 0, 1, 0, 0, 1) => JumpToHL,
-    (1, 1, r1, r0, 0, 1, 0, 1) => Push(as_register_pair(r1, r0)),
-    (1, 1, r1, r0, 0, 0, 0, 1) => Pop(as_register_pair(r1, r0)),
+    (1, 1, r1, r0, 0, 1, 0, 1) => Push(as_operand_16(r1, r0)),
+    (1, 1, r1, r0, 0, 0, 0, 1) => Pop(as_operand_16(r1, r0)),
     (1, 1, 1, 1, enable, 0, 1, 1) => {
       if enable == 1 {
         EnableInterrupts
@@ -156,9 +155,7 @@ pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
     },
     // Bit instructions
     _ if first_byte == 0xCB => {
-      println!("bit instructions");
       let next_byte = device.read_next_byte();
-      println!("0x{:X}", next_byte);
       let next_bits = to_bit_tuple(next_byte);
       match next_bits {
         (0, 0, 0, no_carry, 0, d2, d1, d0) => {

@@ -3,9 +3,12 @@ use emulation::constants::*;
 use emulation::cartridge::{Cartridge};
 use emulation::device::{DeviceType};
 
+use emulation::address_mapper::AddressMapper;
 use emulation::memory_location::*;
 use emulation::memory_location::MemoryLocation::*;
 use emulation::memory_location::CartridgeMemoryLocation::*;
+
+use emulation::audio::controller::AudioController;
 
 pub struct MMU {
   cartridge: Option<Box<Cartridge>>,
@@ -14,7 +17,8 @@ pub struct MMU {
   ram: Vec<u8>,
   vram: Vec<u8>,
   selected_ram_bank: usize,
-  selected_vram_bank: usize
+  selected_vram_bank: usize,
+  audio: AudioController
 }
 
 impl MMU {
@@ -29,11 +33,24 @@ impl MMU {
       ram: ram,
       vram: vram,
       selected_ram_bank: 1,
-      selected_vram_bank: 0
+      selected_vram_bank: 0,
+      audio: AudioController::new()
     }
   }
 
-  pub fn resolve_address(&self, address: u16) -> MemoryLocation {
+  pub fn read_to_buffer(&self, buffer: &mut [u8], address: u16, length: u16) {
+    if buffer.len() < (length as usize) {
+      panic!("Tried to read {} bytes to a buffer sized {}.", buffer.len(), length);
+    }
+
+    for i in 0 .. length {
+      buffer[i as usize] = self.read_8(self.resolve_address(address + i));
+    }
+  }
+}
+
+impl AddressMapper<MemoryLocation> for MMU {
+  fn resolve_address(&self, address: u16) -> MemoryLocation {
     match address {
       0 ... 255 if self.is_booting => Bootrom(address as u8),
       ROM_BANK_0_START ... ROM_BANK_0_END => CartridgeLocation(RomBank0(address - ROM_BANK_0_START)),
@@ -41,11 +58,12 @@ impl MMU {
       RAM_BANK_0_START ... RAM_BANK_0_END => RamBank0(address - RAM_BANK_0_START),
       RAM_BANK_N_START ... RAM_BANK_N_END => RamBankN(address - RAM_BANK_N_START),
       VRAM_START       ... VRAM_END       => Vram(address - VRAM_START),
+      AUDIO_START      ... AUDIO_END      => Audio(self.audio.resolve_address(address)),
       otherwise => MemoryLocation::Invalid(otherwise)
     }
   }
 
-  pub fn read_8(&self, location: MemoryLocation) -> u8 {
+  fn read_8(&self, location: MemoryLocation) -> u8 {
     match location {
       MemoryLocation::Bootrom(offset) => if let Some(ref bootrom) = self.bootrom {bootrom[offset as usize]} else {0},
       MemoryLocation::RamBank0(offset) => self.ram[offset as usize],
@@ -57,26 +75,14 @@ impl MMU {
         } else {
           panic!("Tried to read from cartridge when one isn't inserted.")
         }
-      }
+      },
+      MemoryLocation::Audio(audio_location) => self.audio.read_8(audio_location),
       MemoryLocation::Invalid(e) => panic!("Tried to read an invalid memory location: 0x{:X}", e)
     }
   }
 
-  pub fn read_addr_8(&self, address: u16) -> u8 {
-    self.read_8(self.resolve_address(address))
-  }
-
-  pub fn read_to_buffer(&self, buffer: &mut [u8], address: u16, length: u16) {
-    if buffer.len() < (length as usize) {
-      panic!("Tried to read {} bytes to a buffer sized {}.", buffer.len(), length);
-    }
-
-    for i in 0 .. length {
-      buffer[i as usize] = self.read_8(self.resolve_address(address + i));
-    }
-  } 
-
-  pub fn write_8(&mut self, location: MemoryLocation, value: u8) {
+  fn write_8(&mut self, location: MemoryLocation, value: u8) {
+    println!("${:?} = 0x{:x}", location, value);
     match location {
       MemoryLocation::Bootrom(_) => (),
       MemoryLocation::RamBank0(offset) => self.ram[offset as usize] = value,
@@ -87,13 +93,9 @@ impl MMU {
           Some(ref cartridge) => cartridge.write_8(cartridge_location, value),
           None => panic!("Tried to read from cartridge when one isn't inserted.")
         }
-      }
+      },
+      MemoryLocation::Audio(audio_location) => self.audio.write_8(audio_location, value),
       MemoryLocation::Invalid(e) => panic!("Tried to write to an invalid memory location: 0x{:X}", e)
     }
-  }
-
-  pub fn write_addr_8(&mut self, address: u16, value: u8) {
-    let location = self.resolve_address(address);
-    self.write_8(location, value);
   }
 }
