@@ -5,4 +5,3 @@ authors = ["Paavo Huhtala <paavo.huhtala@gmail.com>"]
 
 [dependencies]
 sfml = "0.11.2"
-clippy = "*"

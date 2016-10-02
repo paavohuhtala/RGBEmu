@@ -7,7 +7,7 @@ use emulation::instruction::{Operand8, Operand16, ConditionCode};
 use emulation::instruction::Instruction::*;
 use emulation::instruction::Operand8::*;
 use emulation::instruction::Operand16::*;
-use emulation::address_mapper::AddressMapper;
+use emulation::address_mapper::{AddressMapper, Addressable};
 
 trait ReadWriteRegisters {
   fn get_operand_8(&self, operand: Operand8) -> u8;
@@ -114,6 +114,30 @@ pub fn run_cycle(device: &mut Device) -> i32 {
       let value = device.get_operand_8(from);
       device.set_operand_8(to, value);
       4
+    },
+    StoreAHighC => {
+      let c = device.get_operand_8(C);
+      let a = device.get_operand_8(A);
+      let address: u16 = 0xFF00 + c as u16;
+      device.memory.write_addr_8(address, a);
+      8
+    },
+    StoreAHigh(offset) => {
+      let a = device.get_operand_8(A);
+      let address: u16 = 0xFF00 + offset as u16;
+      device.memory.write_addr_8(address, a);
+      12
+    }
+    IncrementOperand8(operand) => {
+      let inc = device.get_operand_8(operand).wrapping_add(1);
+      device.set_operand_8(operand, inc);
+      if operand.is_memref() {12} else {4}
+    },
+    LoadAIndirect(operand) => {
+      let op = device.get_operand_16(operand);
+      let value = device.memory.read_addr_8(op);
+      device.set_operand_8(A, value);
+      8
     },
     _ => panic!("Unimplemented instruction: {:?}", instruction)
   }

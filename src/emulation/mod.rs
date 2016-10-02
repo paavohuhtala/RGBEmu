@@ -13,3 +13,4 @@ pub mod interpreter;
 pub mod device;
 
 pub mod audio;
+pub mod video;

@@ -1,9 +1,17 @@
 
-pub trait AddressMapper<T> {
-  fn resolve_address(&self, address: u16) -> T;
-  fn read_8(&self, location: T) -> u8;
-  fn write_8(&mut self, location: T, value: u8);
+pub trait AddressMapper {
+  type T;
+  fn resolve_address(&self, address: u16) -> Self::T;
+  fn read_8(&self, location: Self::T) -> u8;
+  fn write_8(&mut self, location: Self::T, value: u8);
+}
 
+pub trait Addressable {
+  fn read_addr_8(&self, address: u16) -> u8;
+  fn write_addr_8(&mut self, address: u16, value: u8);
+}
+
+impl<T : AddressMapper> Addressable for T {
   fn read_addr_8(&self, address: u16) -> u8 {
     let location = self.resolve_address(address);
     self.read_8(location)

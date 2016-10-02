@@ -16,7 +16,9 @@ impl AudioController {
 type AudioRamOffset = u8;
 pub type AudioRamLocation = Result<AudioRamOffset, u16>;
 
-impl AddressMapper<AudioRamLocation> for AudioController {
+impl AddressMapper for AudioController {
+  type T = AudioRamLocation;
+  
   fn resolve_address(&self, address: u16) -> AudioRamLocation {
     if address < 0xFF10 || address > 0xFF3F {
       Err(address)

@@ -3,12 +3,13 @@ use emulation::constants::*;
 use emulation::cartridge::{Cartridge};
 use emulation::device::{DeviceType};
 
-use emulation::address_mapper::AddressMapper;
+use emulation::address_mapper::{AddressMapper, Addressable};
 use emulation::memory_location::*;
 use emulation::memory_location::MemoryLocation::*;
 use emulation::memory_location::CartridgeMemoryLocation::*;
 
 use emulation::audio::controller::AudioController;
+use emulation::video::controller::VideoController;
 
 pub struct MMU {
   cartridge: Option<Box<Cartridge>>,
@@ -18,7 +19,8 @@ pub struct MMU {
   vram: Vec<u8>,
   selected_ram_bank: usize,
   selected_vram_bank: usize,
-  audio: AudioController
+  audio: AudioController,
+  video: VideoController
 }
 
 impl MMU {
@@ -34,7 +36,8 @@ impl MMU {
       vram: vram,
       selected_ram_bank: 1,
       selected_vram_bank: 0,
-      audio: AudioController::new()
+      audio: AudioController::new(),
+      video: VideoController::new()
     }
   }
 
@@ -49,7 +52,9 @@ impl MMU {
   }
 }
 
-impl AddressMapper<MemoryLocation> for MMU {
+impl AddressMapper for MMU {
+  type T = MemoryLocation;
+  
   fn resolve_address(&self, address: u16) -> MemoryLocation {
     match address {
       0 ... 255 if self.is_booting => Bootrom(address as u8),
@@ -58,7 +63,8 @@ impl AddressMapper<MemoryLocation> for MMU {
       RAM_BANK_0_START ... RAM_BANK_0_END => RamBank0(address - RAM_BANK_0_START),
       RAM_BANK_N_START ... RAM_BANK_N_END => RamBankN(address - RAM_BANK_N_START),
       VRAM_START       ... VRAM_END       => Vram(address - VRAM_START),
-      AUDIO_START      ... AUDIO_END      => Audio(self.audio.resolve_address(address)),
+      AUDIO_IO_START   ... AUDIO_IO_END   => Audio(self.audio.resolve_address(address)),
+      VIDEO_IO_START   ... VIDEO_IO_END   => Video(self.video.resolve_address(address)),
       otherwise => MemoryLocation::Invalid(otherwise)
     }
   }
@@ -77,6 +83,7 @@ impl AddressMapper<MemoryLocation> for MMU {
         }
       },
       MemoryLocation::Audio(audio_location) => self.audio.read_8(audio_location),
+      MemoryLocation::Video(video_location) => self.video.read_8(video_location),
       MemoryLocation::Invalid(e) => panic!("Tried to read an invalid memory location: 0x{:X}", e)
     }
   }
@@ -95,6 +102,7 @@ impl AddressMapper<MemoryLocation> for MMU {
         }
       },
       MemoryLocation::Audio(audio_location) => self.audio.write_8(audio_location, value),
+      MemoryLocation::Video(video_location) => self.audio.write_8(video_location, value),
       MemoryLocation::Invalid(e) => panic!("Tried to write to an invalid memory location: 0x{:X}", e)
     }
   }

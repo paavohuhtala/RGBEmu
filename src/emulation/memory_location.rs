@@ -1,5 +1,6 @@
 
 use emulation::audio::controller::AudioRamLocation;
+use emulation::video::controller::VideoRegisterLocation;
 
 #[derive(Debug)]
 pub enum CartridgeMemoryLocation {
@@ -16,5 +17,6 @@ pub enum MemoryLocation {
   Vram(u16),
   CartridgeLocation(CartridgeMemoryLocation),
   Bootrom(u8),
-  Audio(AudioRamLocation)
+  Audio(AudioRamLocation),
+  Video(VideoRegisterLocation)
 }
