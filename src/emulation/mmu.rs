@@ -12,8 +12,8 @@ use emulation::audio::controller::AudioController;
 use emulation::video::controller::VideoController;
 
 pub struct MMU {
-  cartridge: Option<Box<Cartridge>>,
-  bootrom: Option<Vec<u8>>,
+  pub cartridge: Option<Box<Cartridge>>,
+  pub bootrom: Option<Vec<u8>>,
   is_booting: bool,
   ram: Vec<u8>,
   vram: Vec<u8>,
@@ -97,7 +97,7 @@ impl AddressMapper for MMU {
       MemoryLocation::Vram(offset) => self.vram[self.selected_vram_bank * VRAM_BANK_SIZE + (offset as usize)] = value,
       MemoryLocation::CartridgeLocation(cartridge_location) => {
         match self.cartridge {
-          Some(ref cartridge) => cartridge.write_8(cartridge_location, value),
+          Some(ref mut cartridge) => cartridge.write_8(cartridge_location, value),
           None => panic!("Tried to read from cartridge when one isn't inserted.")
         }
       },

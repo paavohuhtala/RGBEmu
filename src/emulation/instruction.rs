@@ -145,7 +145,7 @@ pub enum Instruction {
   ShiftRightLogical(Operand8),
   TestBit(u8, Operand8),
   SetBit(u8, Operand8),
-  ClearBi(u8, Operand8),
+  ClearBit(u8, Operand8),
   AddSignedImmediateToSP(i8),
   Stop  
 }

@@ -3,6 +3,7 @@
 #![feature(box_syntax)]
 #![feature(associated_consts)]
 #![feature(plugin)]
+#![feature(field_init_shorthand)]
 
 #[cfg(test)]
 mod tests;
@@ -19,7 +20,7 @@ use sfml::system::{Vector2u};
 
 mod emulation;
 use emulation::device::Device;
-use emulation::cartridge::CartridgeHeader;
+use emulation::cartridge::{Cartridge};
 
 macro_rules! times {
   ($n: expr, $_fn: block) => { for _ in 0..$n { $_fn } }
@@ -38,11 +39,10 @@ fn main() {
   let mut cartridge_data : Vec<u8> = vec!();
   File::open("./cpu_instrs/cpu_instrs.gb").unwrap().read_to_end(&mut cartridge_data).unwrap();
 
-  let header = CartridgeHeader::parse(&cartridge_data[.. 0x114F]);
-  println!("Game title: {:?}", header.title);
-  println!("RAM size: 0x{:X}", header.rom_size);
-
   let mut device = Device::new_gbc(Some(rom_buffer));
+  let cartridge = Cartridge::from_bytes(&cartridge_data).unwrap();
+
+  device.memory.cartridge = Some(cartridge);
 
   loop {
     device.run_cycle()

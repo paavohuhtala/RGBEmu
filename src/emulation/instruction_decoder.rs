@@ -27,6 +27,8 @@ fn to_condition_code(b2: u8, b1: u8, b0: u8) -> ConditionCode {
   ConditionCode::decode(to_byte_3(b2, b1, b0)).unwrap()
 }
 
+// Partially based on:
+// http://www.classiccmp.org/dunfield/r/8080.txt
 pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
   print!("${:04x} ", device.get_stream_position());
   let first_byte = device.read_next_byte();
@@ -192,7 +194,7 @@ pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
           }
         },
         (0, 1, b2, b1, b0, d2, d1, d0) => TestBit(to_byte_3(b2, b1, b0), to_operand(d2, d1, d0)),
-        (1, 0, b2, b1, b0, d2, d1, d0) => ClearBi(to_byte_3(b2, b1, b0), to_operand(d2, d1, d0)),
+        (1, 0, b2, b1, b0, d2, d1, d0) => ClearBit(to_byte_3(b2, b1, b0), to_operand(d2, d1, d0)),
         (1, 1, b2, b1, b0, d2, d1, d0) => SetBit(to_byte_3(b2, b1, b0), to_operand(d2, d1, d0)),
         _ => panic!("This shouldn't happen.")
       }

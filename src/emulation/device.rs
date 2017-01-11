@@ -1,7 +1,7 @@
 
 use emulation::constants::*;
 use emulation::registers::{Registers};
-use emulation::address_mapper::{Addressable, AddressMapper};
+use emulation::address_mapper::{AddressMapper};
 use emulation::mmu::{MMU};
 use emulation::instruction::{Instruction};
 
@@ -57,11 +57,17 @@ pub struct Device {
 
 impl Device {
   pub fn new(device: DeviceType, bootrom: Option<Vec<u8>>) -> Device {
-    Device {
+    let mut device = Device {
       regs: Registers::new(),
       memory: MMU::new(device, bootrom),
       execution_state: ExecutionState::Halted
+    };
+
+    if device.memory.bootrom.is_none() {
+      device.simulate_bootrom();
     }
+
+    device
   }
 
   pub fn simulate_bootrom(&mut self) {
@@ -81,8 +87,6 @@ impl Device {
     self.memory.read_8(self.memory.resolve_address(pc))
   }
 
-  // Partially based on:
-  // http://www.classiccmp.org/dunfield/r/8080.txt
   fn decode_next_instruction(&mut self) -> Instruction {
     decode_instruction(self)
   }
