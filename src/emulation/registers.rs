@@ -1,4 +1,5 @@
 
+#[derive(Debug, Clone)]
 pub struct Registers {
   pub a: u8,
   pub f: u8,
@@ -27,12 +28,12 @@ macro_rules! set_16 {
 pub enum StatusFlag {
   C  = 0b0000_0001,
   N  = 0b0000_0010,
-  PV = 0b0000_0100,
+  //PV = 0b0000_0100,
   F3 = 0b0000_1000,
   H  = 0b0001_0000,
   F5 = 0b0010_0000,
   Z  = 0b0100_0000,
-  S  = 0b1000_0000
+  //S  = 0b1000_0000
 } 
 
 impl Registers {

@@ -3,8 +3,9 @@ use emulation::constants::*;
 use emulation::registers::{Registers};
 use emulation::address_mapper::{AddressMapper};
 use emulation::mmu::{MMU};
-use emulation::instruction::{Instruction};
-
+use emulation::instruction::{Instruction, Operand8, Operand16};
+use emulation::instruction::Operand8::*;
+use emulation::instruction::Operand16::*;
 use emulation::instruction_decoder::*;
 use emulation::interpreter;
 
@@ -103,5 +104,63 @@ impl ReadOnlyByteStream for Device {
 
   fn get_stream_position(&self) -> u16 {
     self.regs.pc
+  }
+}
+
+pub trait ReadWriteRegisters {
+  fn get_operand_8(&self, operand: Operand8) -> u8;
+  fn get_operand_16(&self, operand: Operand16) -> u16;
+  fn set_operand_8(&mut self, operand: Operand8, value: u8);
+  fn set_operand_16(&mut self, operand: Operand16, value: u16);
+}
+
+impl ReadWriteRegisters for Device {
+  fn get_operand_8(&self, operand: Operand8) -> u8 {
+    match operand {
+      A => self.regs.a,
+      B => self.regs.b,
+      C => self.regs.c,
+      D => self.regs.d,
+      E => self.regs.e,
+      H => self.regs.h,
+      L => self.regs.l,
+      MemoryReference => self.memory.read_8(self.memory.resolve_address(self.regs.hl())),
+      Immediate(value) => value
+    }
+  }
+
+  fn set_operand_8(&mut self, operand: Operand8, value: u8) {
+    match operand {
+      A => self.regs.a = value,
+      B => self.regs.b = value,
+      C => self.regs.c = value,
+      D => self.regs.d = value,
+      E => self.regs.e = value,
+      H => self.regs.h = value,
+      L => self.regs.l = value,
+      MemoryReference => {
+        let location = self.memory.resolve_address(self.regs.hl());
+        self.memory.write_8(location, value)
+      },
+      Immediate(_) => panic!("Tried to set an immediate value")
+    }
+  }
+
+  fn get_operand_16(&self, operand_16: Operand16) -> u16 {
+    match operand_16 {
+      BC => self.regs.bc(),
+      DE => self.regs.de(),
+      HL => self.regs.hl(),
+      SP => self.regs.sp
+    }
+  }
+
+  fn set_operand_16(&mut self, operand_16: Operand16, value: u16) {
+    match operand_16 {
+      BC => self.regs.set_bc(value),
+      DE => self.regs.set_de(value),
+      HL => self.regs.set_hl(value),
+      SP => self.regs.sp = value
+    }
   }
 }

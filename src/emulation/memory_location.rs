@@ -18,5 +18,6 @@ pub enum MemoryLocation {
   CartridgeLocation(CartridgeMemoryLocation),
   Bootrom(u8),
   Audio(AudioRamLocation),
-  Video(VideoRegisterLocation)
+  Video(VideoRegisterLocation),
+  HighRam(u8)
 }

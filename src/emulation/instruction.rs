@@ -1,5 +1,7 @@
 
-#[derive(Debug, PartialEq, Clone)]
+use emulation::device::{Device, ReadWriteRegisters};
+
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Operand8 {
   A,
   B,
@@ -11,8 +13,6 @@ pub enum Operand8 {
   MemoryReference,
   Immediate(u8)
 }
-
-impl Copy for Operand8 {}
 
 impl Operand8 {
   pub fn decode(value: u8) -> Option<Operand8> {
@@ -42,9 +42,17 @@ impl Operand8 {
       _ => false
     }
   }
+  
+  pub fn get(self, device: &Device) -> u8 {
+    device.get_operand_8(self)
+  } 
+
+  pub fn set(self, device: &mut Device, value: u8) {
+    device.set_operand_8(self, value);
+  }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Operand16 {
   BC,
   DE,
@@ -62,6 +70,10 @@ impl Operand16 {
       _    => None
     }
   }
+
+  pub fn get(self, device: &Device) -> u16 {
+    device.get_operand_16(self)
+  } 
 }
 
 #[derive(Debug, PartialEq)]
@@ -111,10 +123,10 @@ pub enum Instruction {
   OrOperandWithA(Operand8),
   XorOperandWithA(Operand8),
   CompareOperandWithA(Operand8),
-  RotateALeft,
-  RotateARight,
-  RotateALeftCarry,
-  RotateARightCarry,
+  RotateLeftA,
+  RotateRightA,
+  RotateLeftCarryA,
+  RotateRightCarryA,
   ComplementA,
   ComplementCarry,
   SetCarry,

@@ -32,6 +32,7 @@ fn to_condition_code(b2: u8, b1: u8, b0: u8) -> ConditionCode {
 pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
   print!("${:04x} ", device.get_stream_position());
   let first_byte = device.read_next_byte();
+  print!("0x{:02x} ", first_byte);
   let first_bits = to_bit_tuple(first_byte);
 
   match first_bits {
@@ -124,10 +125,10 @@ pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
     (1, 1, 1, 1, 1, 1, 1, 0) => CompareOperandWithA(Operand8::Immediate(device.read_next_byte())),
     (0, 0, 0, carry, right, 1, 1, 1) => {
       match (carry == 1, right == 1) {
-        (false, false) => RotateALeft,
-        (true, false) => RotateALeftCarry,
-        (false, true) => RotateARight,
-        (true, true) => RotateARightCarry
+        (false, false) => RotateLeftA,
+        (true, false) => RotateLeftCarryA,
+        (false, true) => RotateRightA,
+        (true, true) => RotateRightCarryA
       }
     },
     (0, 0, 1, 0, 1, 1, 1, 1) => ComplementA,
@@ -158,6 +159,7 @@ pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
     // Bit instructions
     _ if first_byte == 0xCB => {
       let next_byte = device.read_next_byte();
+      print!("0x{:02x} ", next_byte);
       let next_bits = to_bit_tuple(next_byte);
       match next_bits {
         (0, 0, 0, no_carry, 0, d2, d1, d0) => {

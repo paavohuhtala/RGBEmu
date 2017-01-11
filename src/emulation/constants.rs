@@ -35,3 +35,5 @@ pub const AUDIO_IO_END: u16        = 0xFF3F;
 pub const VIDEO_IO_START: u16      = 0xFF40;
 pub const VIDEO_IO_END: u16        = 0xFF6B;
 pub const IO_END: u16              = 0xFF7F;
+pub const HIGH_RAM_START: u16     = 0xFF80;
+pub const HIGH_RAM_END: u16       = 0xFFFE;
