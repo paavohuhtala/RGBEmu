@@ -71,22 +71,21 @@ fn main() {
   let renderer_canvas = window.into_canvas().software().build().unwrap();
   let texture_creator = renderer_canvas.texture_creator(); 
   let renderer_context = SdlRendererContext::new(renderer_canvas, &texture_creator);
-  //renderer_context.set_draw_color(sdl2::pixels::Color::RGB(0, 0, 0));
 
   let debug_canvas = debug_window.into_canvas().software().build().unwrap();
   let texture_creator = debug_canvas.texture_creator(); 
   let debug_window_context = SdlRendererContext::new(debug_canvas, &texture_creator);
   let mut sdl_renderer = SdlRenderer::new(renderer_context, debug_window_context);
 
-  let mut rom_buffer : Vec<u8> = vec!();
-  File::open("DMG_ROM.bin").unwrap().read_to_end(&mut rom_buffer).unwrap();
+  // let mut rom_buffer : Vec<u8> = vec!();
+  // File::open("DMG_ROM.bin").unwrap().read_to_end(&mut rom_buffer).unwrap();
 
   let mut cartridge_data : Vec<u8> = vec!();
-  //File::open("./cpu_instrs/individual/10-bit ops.gb").unwrap().read_to_end(&mut cartridge_data).unwrap();
-  File::open("./test_roms/Tetris (World).gb").unwrap().read_to_end(&mut cartridge_data).unwrap();
-  //File::open("./test_roms/Super Mario Land (JUE) (V1.1) [!].gb").unwrap().read_to_end(&mut cartridge_data).unwrap();
+  File::open("./cpu_instrs/individual/04-op r,imm.gb").unwrap().read_to_end(&mut cartridge_data).unwrap();
+  // File::open("./test_roms/Tetris (World).gb").unwrap().read_to_end(&mut cartridge_data).unwrap();
 
-  let mut device = Device::new_gb(Some(rom_buffer));
+  // let mut device = Device::new_gb(Some(rom_buffer));
+  let mut device = Device::new_gb(None);
   let cartridge = Cartridge::from_bytes(&cartridge_data).unwrap();
   println!("{:?}", cartridge.header);
 

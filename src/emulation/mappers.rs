@@ -141,7 +141,7 @@ impl Mapper for MBC1 {
   fn read_8(&self, memory: &CartridgeMemory, address: u16) -> u8 {
     use emulation::mappers::MBC1Location::*;
     let location = self.resolve_address(address);
-    println!("Cart R: {:?}", location);
+    // println!("Cart R: {:?}", location);
     match location {
       RomBank0(offs) => memory.rom[offs as usize],
       RomBankN(offs) => memory.rom[offs as usize],

@@ -23,6 +23,7 @@ fn load_roms() -> Vec<(String, Vec<u8>)> {
 }
 
 #[test]
+#[ignore]
 fn load_headers() {
   let roms = load_roms();
   for (name, data) in roms {

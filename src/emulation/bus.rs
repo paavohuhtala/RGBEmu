@@ -171,7 +171,7 @@ impl AddressMapper for Bus {
           InterruptEnable => self.interrupt.set_enable(value),
           Ignored(_) => (),
           Invalid(e) => panic!("Tried to write to an invalid memory location: 0x{:X}", e),
-          _ => panic!("This cannot happen.") 
+          _ => unreachable!("This cannot happen.") 
         };
         InternalMessage::None
       }
