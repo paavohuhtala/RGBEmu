@@ -1,4 +1,6 @@
 
+use std::io::{Cursor, Read, Seek};
+
 use emulation::bitutils::*;
 use emulation::instruction::{Instruction, Operand8, Operand16, ConditionCode};
 use emulation::instruction::Instruction::*;
@@ -12,6 +14,19 @@ pub trait ReadOnlyByteStream {
     let high = self.read_next_byte();
 
     ((high as u16) << 8) | (low as u16)
+  }
+}
+
+impl ReadOnlyByteStream for Cursor<Vec<u8>>
+{
+  fn read_next_byte(&mut self) -> u8 {
+    let mut buffer = [0u8; 1];
+    self.read_exact(&mut buffer).unwrap();
+    buffer[0]
+  }
+
+  fn get_stream_position(&self) -> u16 {
+    self.position() as u16
   }
 }
 
@@ -30,9 +45,9 @@ fn to_condition_code(b2: u8, b1: u8, b0: u8) -> ConditionCode {
 // Partially based on:
 // http://www.classiccmp.org/dunfield/r/8080.txt
 pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
-  print!("${:04x} ", device.get_stream_position());
+  //print!("${:04x} ", device.get_stream_position());
   let first_byte = device.read_next_byte();
-  print!("0x{:02x} ", first_byte);
+  //println!("0x{:02x}", first_byte);
   let first_bits = to_bit_tuple(first_byte);
 
   match first_bits {
@@ -51,7 +66,7 @@ pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
     },
     (0, 0, r1, r0, 0, 0, 0, 1) => {
       let to = as_operand_16(r1, r0);
-      let immediate = device.read_next_16();
+      let immediate = device.read_next_16();  
       MoveImmediate16 {to: to, value: immediate}
     },
     (1, 1, 1, 1, 1, 0, 1, 0) => LoadA(device.read_next_16()),
@@ -113,6 +128,8 @@ pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
         IncrementOperand16(operand_16)
       }
     },
+    (1, 1, 1, 1, 1, 0, 0, 0) => MoveSPOffsetToHL(device.read_next_byte()),
+    (1, 1, 1, 1, 1, 0, 0, 1) => MoveHLToSP,
     (0, 0, r1, r0, 1, 0, 0, 1) => AddOperandToHL(as_operand_16(r1, r0)),
     (0, 0, 1, 0, 0, 1, 1, 1) => BCDCorrectA,
     (1, 0, 1, 0, 0, s2, s1, s0) => AndOperandWithA(to_operand(s2, s1, s0)),
@@ -125,10 +142,10 @@ pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
     (1, 1, 1, 1, 1, 1, 1, 0) => CompareOperandWithA(Operand8::Immediate(device.read_next_byte())),
     (0, 0, 0, carry, right, 1, 1, 1) => {
       match (carry == 1, right == 1) {
-        (false, false) => RotateLeftA,
-        (true, false) => RotateLeftCarryA,
-        (false, true) => RotateRightA,
-        (true, true) => RotateRightCarryA
+        (true, false) => RotateLeftA,
+        (false, false) => RotateLeftCarryA,
+        (true, true) => RotateRightA,
+        (false, true) => RotateRightCarryA
       }
     },
     (0, 0, 1, 0, 1, 1, 1, 1) => ComplementA,
@@ -144,6 +161,7 @@ pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
     (1, 1, 0, 0, 1, 1, 0, 1) => Call(device.read_next_16()),
     (1, 1, c2, c1, c0, 1, 0, 0) => ConditionalCall(to_condition_code(c2, c1, c0), device.read_next_16()),
     (1, 1, 0, 0, 1, 0, 0, 1) => Return,
+    (1, 1, 0, 1, 1, 0, 0, 1) => ReturnFromInterrupt,
     (1, 1, c2, c1, c0, 0, 0, 0) => ConditionalReturn(to_condition_code(c2, c1, c0)),
     (1, 1, n2, n1, n0, 1, 1, 1) => Restart(to_byte_3(n2, n1, n0)),
     (1, 1, 1, 0, 1, 0, 0, 1) => JumpToHL,
@@ -159,7 +177,7 @@ pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
     // Bit instructions
     _ if first_byte == 0xCB => {
       let next_byte = device.read_next_byte();
-      print!("0x{:02x} ", next_byte);
+      //print!("0x{:02x} ", next_byte);
       let next_bits = to_bit_tuple(next_byte);
       match next_bits {
         (0, 0, 0, no_carry, 0, d2, d1, d0) => {
@@ -198,9 +216,17 @@ pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
         (0, 1, b2, b1, b0, d2, d1, d0) => TestBit(to_byte_3(b2, b1, b0), to_operand(d2, d1, d0)),
         (1, 0, b2, b1, b0, d2, d1, d0) => ClearBit(to_byte_3(b2, b1, b0), to_operand(d2, d1, d0)),
         (1, 1, b2, b1, b0, d2, d1, d0) => SetBit(to_byte_3(b2, b1, b0), to_operand(d2, d1, d0)),
-        _ => panic!("This shouldn't happen.")
+        _ => Unknown(0xCB << 8 | (next_byte as u16))
       }
     }
-    _ => panic!("Unimplemented instruction: 0x{:02X}", first_byte)
+    _ => Unknown(first_byte as u16)
   }
+}
+
+pub trait InstructionDecoder {
+  fn decode_instruction(from: &mut ReadOnlyByteStream);
+}
+
+struct InstructionCache {
+
 }

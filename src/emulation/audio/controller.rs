@@ -1,14 +1,15 @@
 
 use emulation::address_mapper::AddressMapper;
+use emulation::internal_message::{InternalMessage};
 
 pub struct AudioController {
-  ram: [u8; 0x2F]
+  ram: [u8; 0x30]
 }
 
 impl AudioController {
   pub fn new() -> AudioController {
     AudioController {
-      ram: [0; 0x2F]
+      ram: [0; 0x30]
     }
   }
 }
@@ -34,10 +35,12 @@ impl AddressMapper for AudioController {
     }
   }
 
-  fn write_8(&mut self, location: AudioRamLocation, value: u8) {
+  fn write_8(&mut self, location: AudioRamLocation, value: u8) -> InternalMessage {
     match location {
       Ok(offset) => self.ram[offset as usize] = value,
       Err(address) => panic!("Tried to write to invalid audio RAM address: ${:04x}", address)
     }
+
+    InternalMessage::None
   }
 }

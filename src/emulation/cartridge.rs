@@ -3,8 +3,7 @@ use std;
 use std::fmt;
 
 use emulation::constants::*;
-use emulation::memory_location::CartridgeMemoryLocation;
-use emulation::mappers::{MapperType, Mapper, RomOnly};
+use emulation::mappers::{MapperType, Mapper};
 
 pub struct Cartridge {
   pub memory: CartridgeMemory,
@@ -18,10 +17,10 @@ pub struct CartridgeMemory {
 }
 
 impl CartridgeMemory {
-  pub fn new(rom_size: usize, ram_size: Option<usize>) -> CartridgeMemory {
+  pub fn new(rom_size: usize, ram_size: usize) -> CartridgeMemory {
     CartridgeMemory {
       rom: vec![0u8; rom_size],
-      ram: vec![0u8; ram_size.unwrap_or(0 as usize)]
+      ram: vec![0u8; ram_size]
     }
   }
 }
@@ -32,37 +31,67 @@ impl Cartridge {
     header_bytes.clone_from_slice(&buffer[ .. 0x14F]);
 
     let header = CartridgeHeader::parse(&header_bytes);
-    let memory = CartridgeMemory::new(header.rom_size, header.ram_size);
-    let mapper = Mapper::from_type(header.cartridge_type.mapper);
+    
+    let mut memory = CartridgeMemory::new(header.cartridge_type.rom_size, header.cartridge_type.ram_size);
+    memory.rom.copy_from_slice(buffer);
+    let mapper = Mapper::from_cartridge_type(header.cartridge_type);
     let cartridge = Cartridge { header, memory, mapper };
 
     Some(Box::new(cartridge))
   }
 
-  pub fn read_8(&self, location: CartridgeMemoryLocation) -> u8 {
-    self.mapper.read_8(&self.memory, location)
+  pub fn read_8(&self, address: u16) -> u8 {
+    self.mapper.read_8(&self.memory, address)
   }
 
-  pub fn write_8(&mut self, location: CartridgeMemoryLocation, value: u8) {
-    self.mapper.write_8(&mut self.memory, location, value);
+  pub fn write_8(&mut self, address: u16, value: u8) {
+    self.mapper.write_8(&mut self.memory, address, value);
   }
 }
-
 
 #[derive(Debug, Clone, Copy)]
 pub struct CartridgeType {
-  mapper: MapperType,
-  has_ram: bool,
-  has_battery: bool
+  pub mapper: MapperType,
+  pub has_ram: bool,
+  pub has_battery: bool,
+  pub rom_size: usize,
+  pub ram_size: usize
 }
 
 impl CartridgeType {
-  pub fn default() -> CartridgeType {
-    CartridgeType {
-      mapper: MapperType::RomOnly,
-      has_ram: false,
-      has_battery: false
-    }
+  pub fn new(id: u8, rom_size_id: u8, ram_size_id: u8) -> CartridgeType {
+    // 32 kb << N
+    let rom_size = match rom_size_id {
+      b @ 0 ... 7 => 0x8000 << b,
+      0x52 => 72 * ROM_BANK_SIZE,
+      0x53 => 80 * ROM_BANK_SIZE,
+      0x54 => 96 * ROM_BANK_SIZE,
+      invalid => panic!("Invalid ROM size: {}", invalid)
+    };
+
+    let ram_size = match ram_size_id {
+      0x0 => 0,
+      0x1 => CARTRIDGE_RAM_BANK_SIZE / 4,
+      0x2 => CARTRIDGE_RAM_BANK_SIZE,
+      0x3 => CARTRIDGE_RAM_BANK_SIZE * 4,
+      0x4 => CARTRIDGE_RAM_BANK_SIZE * 16,
+      0x5 => CARTRIDGE_RAM_BANK_SIZE * 8,
+      invalid => panic!("Invalid RAM size: {}", invalid)
+    };
+
+    let (mapper, has_ram, has_battery) = match id {
+      0x00 => (MapperType::RomOnly, false, false),
+      0x01 => (MapperType::MBC1, false, false),
+      0x02 => (MapperType::MBC1, true, false),
+      0x03 => (MapperType::MBC1, true, true),
+      0x05 => (MapperType::MBC2, false, false),
+      0x06 => (MapperType::MBC2, true, true),
+      0x08 => (MapperType::RomOnly, true, false),
+      0x09 => (MapperType::RomOnly, true, true),
+      _ => panic!("Unsupported mapper: 0x{:02x}", id)
+    };
+
+    CartridgeType { mapper, has_ram, has_battery, rom_size, ram_size }
   }
 }
 
@@ -74,61 +103,41 @@ impl fmt::Debug for LogoWrapper {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CartridgeHeader {
-    logo: LogoWrapper,
+    //logo: LogoWrapper,
     pub title: Option<String>,
     supports_gbc: bool,
     supports_sgb: bool,
-    cartridge_type: CartridgeType,
-    pub rom_size: usize,
-    pub ram_size: Option<usize>,
+    pub cartridge_type: CartridgeType,
     is_japanese: bool
 }
 
 impl CartridgeHeader {
   pub fn parse(bytes: &[u8]) -> CartridgeHeader {
-    let mut logo = [0 as u8; 0x30];
+    /*let mut logo = [0 as u8; 0x30];
     for (i, b) in bytes[0x104 .. 0x134].iter().enumerate() {
       logo[i] = *b;
-    }
+    }*/
 
     let title_bytes = &bytes[0x134 .. 0x144];
     let first_zero = title_bytes.iter().position(|b| *b == 0).unwrap_or(15);
     let title = std::str::from_utf8(&title_bytes[.. first_zero]).map(|s|s.to_string()).ok();
 
-    // 32 kb << N
-    let rom_size = match bytes[0x148] {
-      b @ 0 ... 7 => 0x8000 << b,
-      0x52 => 72 * ROM_BANK_SIZE,
-      0x53 => 80 * ROM_BANK_SIZE,
-      0x54 => 96 * ROM_BANK_SIZE,
-      invalid => panic!("Invalid ROM size: {}", invalid)
-    };
+    let cartridge_type_id = bytes[0x147];
+    let rom_size_id = bytes[0x148];
+    let ram_size_id = bytes[0x149];
+    let cartridge_type = CartridgeType::new(cartridge_type_id, rom_size_id, ram_size_id);
 
-    let ram_size = match bytes[0x149] {
-      0x0 => None,
-      0x1 => Some(CARTRIDGE_RAM_BANK_SIZE / 4),
-      0x2 => Some(CARTRIDGE_RAM_BANK_SIZE),
-      0x3 => Some(CARTRIDGE_RAM_BANK_SIZE * 4),
-      0x4 => Some(CARTRIDGE_RAM_BANK_SIZE * 16),
-      0x5 => Some(CARTRIDGE_RAM_BANK_SIZE * 8),
-      invalid => panic!("Invalid RAM size: {}", invalid)
-    };
+    println!("{:?}", cartridge_type);
 
     CartridgeHeader {
-      logo: LogoWrapper(logo),
+      //logo: LogoWrapper(logo),
       title: title,
-      supports_gbc: true,
+      supports_gbc: false,
       supports_sgb: false,
-      cartridge_type: CartridgeType::default(),
-      rom_size: rom_size,
-      ram_size: ram_size,
+      cartridge_type,
       is_japanese: false
     }
   }
-}
-
-trait CatridgeMapper {
-
 }

@@ -3,4 +3,5 @@ Cargo.lock
 cpu_instrs
 DMG_ROM.bin
 *.dll
+!lib/**/*.dll
 test_roms

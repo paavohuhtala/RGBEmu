@@ -2,6 +2,23 @@
 name = "rgbemu"
 version = "0.1.0"
 authors = ["Paavo Huhtala <paavo.huhtala@gmail.com>"]
+build = "build.rs"
 
 [dependencies]
-sfml = "0.11.2"
+bitflags = "*"
+time = "*"
+clippy = {version = "*", optional = true}
+
+[dependencies.bitfield]
+git = "https://github.com/dzamlo/rust-bitfield"
+
+[dependencies.sdl2]
+version = "0.30"
+features = ["image"]
+
+[features]
+default = []
+
+# [target.x86_64-pc-windows-msvc.SDL2_image]
+# rustc-link-search = ["./lib/sdl2_image/msvc/x64"]
+# rustc-link-lib = [":SDL2_image.lib"]

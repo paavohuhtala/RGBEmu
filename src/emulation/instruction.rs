@@ -96,6 +96,7 @@ impl ConditionCode {
 
 #[derive(Debug, PartialEq)]
 pub enum Instruction {
+  Unknown(u16),
   MoveOperand8 {to: Operand8, from: Operand8},
   MoveImmediate16 {to: Operand16, value: u16},
   LoadA(u16),
@@ -109,6 +110,9 @@ pub enum Instruction {
   LoadAHigh(u8),
   StoreAHigh(u8),
   StoreAHighC,
+  MoveSPOffsetToHL(u8),
+  MoveHLToSP,
+  StoreSP(u16),
   AddOperandToA(Operand8),
   AddOperandToACarry(Operand8),
   SubtractOperandFromA(Operand8),
@@ -137,12 +141,12 @@ pub enum Instruction {
   Call(u16),
   ConditionalCall(ConditionCode, u16),
   Return,
+  ReturnFromInterrupt,
   ConditionalReturn(ConditionCode),
   Restart(u8),
   JumpToHL,
   Push(Operand16),
   Pop(Operand16),
-  MoveToSP(Operand16),
   EnableInterrupts,
   DisableInterrupts,
   Halt,
