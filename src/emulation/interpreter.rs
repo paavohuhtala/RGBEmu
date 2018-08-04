@@ -16,21 +16,19 @@ use disassembler::to_asm;
 pub fn run_instruction(device: &mut Device) -> u32 {
   //print!("${:04x} ", device.regs.pc);
   let instruction = decode_instruction(device);
+  // println!("{:?}", instruction);
 
   if let Unknown(opcode) = instruction {
     panic!("Unimplemented instruction: 0x{:04X}", opcode)
   }
 
   if let DebugState::HandlingBreakpoint = device.debug_state {
-  //if device.regs.pc >= 0x300 {
     println!("BEFORE: {:?}, f: {:08b}", device.regs, device.regs.f);
     println!("{:?}", instruction);
     device.pause();
   }
 
-  //println!(": {:?}, f: {:08b}", device.regs, device.regs.f);
   //println!("{}", to_asm(&instruction));
-  //println!("{:?}", instruction);
 
   match instruction {
     Nop => 4,
@@ -121,6 +119,7 @@ pub fn run_instruction(device: &mut Device) -> u32 {
     MoveImmediate16 { to, value } => move_immediate_16(device, to, value),
     Push(operand) => push_16(device, operand),
     Pop(operand) => pop_16(device, operand),
+    StoreSP(address) => store_sp(device, address),
 
     //
     // 8-bit ALU

@@ -107,10 +107,10 @@ impl fmt::Debug for LogoWrapper {
 pub struct CartridgeHeader {
     //logo: LogoWrapper,
     pub title: Option<String>,
-    supports_gbc: bool,
-    supports_sgb: bool,
+    pub supports_gbc: bool,
+    pub supports_sgb: bool,
     pub cartridge_type: CartridgeType,
-    is_japanese: bool
+    pub is_japanese: bool
 }
 
 impl CartridgeHeader {

@@ -46,3 +46,9 @@ pub fn pop_16(device: &mut Device, operand: Operand16) -> u32 {
   device.set_operand_16(operand, value);
   12
 }
+
+pub fn store_sp(device: &mut Device, address: u16) -> u32 {
+  let sp = device.regs.sp;
+  device.write_addr_16(address, sp);
+  12
+}

@@ -131,12 +131,21 @@ impl Device {
     self.handle_message(msg);
   }
 
+  pub fn write_addr_16(&mut self, addr: u16, value: u16) {
+    let BytePair { high, low } = u16_to_pair(value);
+    let msg1 = self.bus.write_addr_8(addr, low);
+    self.handle_message(msg1);
+    let msg2 = self.bus.write_addr_8(addr + 1, high);
+    self.handle_message(msg2);
+  }
+
   pub fn push_16(&mut self, value: u16) {
     let BytePair { high, low } = u16_to_pair(value);
     let sp = self.regs.sp;
-    // POTENTIAL BUG: these writes don't send internal messages
+
     self.write_addr_8(sp, low);
     self.write_addr_8(sp - 1, high);
+
     self.regs.sp -= 2;
   }
 
@@ -149,6 +158,7 @@ impl Device {
 
   fn handle_message(&mut self, message: InternalMessage) {
     match message {
+      InternalMessage::None => (),
       InternalMessage::TriggerInterrupt(interrupt) => {
         if let Interrupt::LCDVBlank = interrupt {
           self.renderer_messages.push(RendererMessage::PresentFrame);
@@ -161,7 +171,6 @@ impl Device {
         self.bus.read_to_buffer(&mut buffer, from, 160);
         self.bus.video.oam = buffer;
       }
-      InternalMessage::None => (),
       _ => panic!("Unsupported internal message: {:?}", message)
     }
   }
