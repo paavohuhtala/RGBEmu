@@ -43,7 +43,6 @@ impl JoypadRegister {
 
 pub struct InputRegister {
   input_state: InputState,
-  register: JoypadRegister,
   selected_set: ButtonSet
 }
 
@@ -51,7 +50,6 @@ impl InputRegister {
   pub fn new() -> InputRegister {
     InputRegister {
       input_state: InputState::default(),
-      register: JoypadRegister::from_bits(0b1100_1111).unwrap(),
       selected_set: ButtonSet::None
     }
   }
@@ -62,13 +60,10 @@ impl InputRegister {
       _ if value & 0b10_0000 == 0 => self.selected_set = ButtonSet::Actions,
       _ => return
     }
-
-    self.register = JoypadRegister::from_input_state(self.input_state, self.selected_set);
   }
 
   pub fn read_8(&self) -> u8 {
-    println!("{:08b}", self.register.bits());
-    self.register.bits()
+    JoypadRegister::from_input_state(self.input_state, self.selected_set).bits()
   }
 
   pub fn update(&mut self, new_state: InputState) {

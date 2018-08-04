@@ -36,8 +36,6 @@ impl RendererColor for SdlColor {
 
 impl RendererPalette<SdlColor> for SdlPalette {
   fn from_colors(colors: [Color; 4]) -> SdlPalette {
-    //println!("{:?}", colors);
-    //println!("{:?}", colors);
     let mut palette_colors = [Color::RGB(255, 0, 255); 256];
     /*palette_colors[0] = Color::RGB(255, 0, 0);
     palette_colors[1] = Color::RGB(0, 255, 0);
@@ -250,9 +248,6 @@ impl<'a> Renderer for SdlRenderer<'a> {
 
   fn draw_scanline(&mut self, device: &Device, scanline: u8) {
     self.state.refresh_scanline(device);
-    self.state.refresh_tile_patterns(device);
-    self.state.refresh_tile_cache();
-    self.draw_background_buffer();
 
     let scanline = scanline as i32;
     let scroll_x = device.bus.video.scroll_x as i32;
@@ -268,8 +263,6 @@ impl<'a> Renderer for SdlRenderer<'a> {
       let window_line_rect = Rect::new(0, scanline - window_y as i32, 256, 256);
       self.state.window_buffer.blit(window_line_rect, self.screen_buffer_cpu.as_mut(), Rect::new(window_x, window_y, 256, 256)).unwrap();
     }
-
-    //println!("Drawing scanline :-D {}", scanline);
   }
 
   fn prepare_frame(&mut self, device: &Device) {
