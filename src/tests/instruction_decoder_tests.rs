@@ -115,6 +115,24 @@ pub fn load_immediate_8() {
 }
 
 #[test]
+pub fn special_stores_8() {
+  verify_instruction(
+    MoveOperand8 {
+      to: Operand8::MemoryReference,
+      from: Operand8::Immediate(0x00),
+    },
+    &[0x36, 0x00],
+  );
+
+  verify_instruction(StoreA(0x00FF), &[0xEA, 0xFF, 0x00]);
+  verify_instruction(StoreSP(0x1234), &[0x08, 0x34, 0x12]);
+  verify_instruction(StoreAIndirectHLIncrement, &[0x22]);
+  verify_instruction(StoreAIndirectHLDecrement, &[0x32]);
+  verify_instruction(StoreAHigh(0xFF), &[0xE0, 0xFF]);
+  verify_instruction(StoreAHighC, &[0xE2]);
+}
+
+#[test]
 pub fn removed_instructions_should_be_unknown_or_panic() {
   let removed_instructions = vec![
     vec![0xD3],

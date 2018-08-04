@@ -80,6 +80,7 @@ pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
     (1, 1, 1, 1, 0, 0, 0, 0) => LoadAHigh(device.read_next_byte()),
     (1, 1, 1, 0, 0, 0, 0, 0) => StoreAHigh(device.read_next_byte()),
     (1, 1, 1, 0, 0, 0, 1, 0) => StoreAHighC,
+    (0, 0, 0, 0, 1, 0, 0, 0) => StoreSP(device.read_next_16()),
     (1, 0, 0, 0, carry, s2, s1, s0) => {
       let register = to_operand(s2, s1, s0);
       if carry == 1 {
