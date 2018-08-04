@@ -120,6 +120,7 @@ pub fn run_instruction(device: &mut Device) -> u32 {
     Push(operand) => push_16(device, operand),
     Pop(operand) => pop_16(device, operand),
     StoreSP(address) => store_sp(device, address),
+    MoveSPOffsetToHL(offset) => move_sp_offset_to_hl(device, offset),
 
     //
     // 8-bit ALU

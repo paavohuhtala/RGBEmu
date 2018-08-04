@@ -1,11 +1,9 @@
-extern crate rgbemu;
-
-use common::rgbemu::emulation::cartridge::{
+use rgbemu::emulation::cartridge::{
   Cartridge, CartridgeHeader, CartridgeMemory, CartridgeType,
 };
-use common::rgbemu::emulation::device::{Device, DeviceType, ExecutionState};
-use common::rgbemu::emulation::mappers::Mapper;
-use common::rgbemu::emulation::address_mapper::AddressMapper;
+use rgbemu::emulation::device::{Device, DeviceType, ExecutionState};
+use rgbemu::emulation::mappers::Mapper;
+use rgbemu::emulation::address_mapper::AddressMapper;
 
 fn create_test_cartridge(rom: &[u8]) -> Box<Cartridge> {
   let mut memory = CartridgeMemory::new(16384, 0);
@@ -35,6 +33,7 @@ pub fn run_program(code: &[u8]) -> Device {
   device.bus.cartridge = Some(cartridge);
 
   while device.execution_state != ExecutionState::Halted {
+    println!("{:?}", device.regs);
     device.run_tick();
   }
 

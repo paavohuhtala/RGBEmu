@@ -52,3 +52,15 @@ pub fn store_sp(device: &mut Device, address: u16) -> u32 {
   device.write_addr_16(address, sp);
   12
 }
+
+pub fn move_sp_offset_to_hl(device: &mut Device, offset: u8) -> u32 {
+  let a = offset as u16;
+  let b = device.regs.sp;
+  let CarryAddResult { result, carry, half_carry } = carry_add_16(a, b);
+
+  device.regs.set_flag_to(StatusFlag::H, half_carry);
+  device.regs.set_flag_to(StatusFlag::C, carry);
+  device.regs.set_hl(result);
+
+  12
+}
