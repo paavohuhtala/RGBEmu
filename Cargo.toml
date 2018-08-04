@@ -4,6 +4,14 @@ version = "0.1.0"
 authors = ["Paavo Huhtala <paavo.huhtala@gmail.com>"]
 build = "build.rs"
 
+[lib]
+name = "rgbemu"
+path = "src/lib.rs"
+
+[[bin]]
+name = "rgbemu_sdl"
+path = "src/main.rs"
+
 [dependencies]
 bitflags = "*"
 time = "*"
@@ -18,7 +26,3 @@ features = ["image"]
 
 [features]
 default = []
-
-# [target.x86_64-pc-windows-msvc.SDL2_image]
-# rustc-link-search = ["./lib/sdl2_image/msvc/x64"]
-# rustc-link-lib = [":SDL2_image.lib"]

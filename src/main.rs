@@ -2,22 +2,9 @@
 #![cfg_attr(feature="clippy", feature(plugin))]
 #![cfg_attr(feature="clippy", plugin(clippy))]
 
-#![allow(dead_code)]
-#![allow(non_upper_case_globals)]
-
-#![feature(trace_macros)] 
-#![feature(log_syntax)]
-#![feature(box_syntax)]
-
-#[macro_use]
-extern crate bitflags;
-#[macro_use]
-extern crate bitfield;
+extern crate rgbemu;
 extern crate time;
 extern crate sdl2;
-
-#[cfg(test)]
-mod tests;
 
 use std::time::{Duration, Instant};
 use std::io::prelude::*;
@@ -25,27 +12,22 @@ use std::io::Cursor;
 use std::fs::File;
 use std::thread::sleep;
 
+use time::{precise_time_ns};
+
 use sdl2::EventPump;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::keyboard::Scancode;
 
-mod rendering;
-use rendering::*;
-use rendering::sdl_renderer::*;
+use rgbemu::rendering::*;
+use rgbemu::rendering::sdl_renderer::*;
 
-mod emulation;
-use emulation::constants::*;
-use emulation::internal_message::RendererMessage::*;
-use emulation::device::Device;
-use emulation::input::InputState;
-use emulation::cartridge::{Cartridge};
-
-use emulation::instruction_decoder::decode_instruction;
-
-mod disassembler;
-
-use time::{precise_time_ns};
+use rgbemu::emulation::constants::{GB_CYCLES_PER_SEC};
+use rgbemu::emulation::internal_message::RendererMessage::*;
+use rgbemu::emulation::device::Device;
+use rgbemu::emulation::input::InputState;
+use rgbemu::emulation::cartridge::{Cartridge};
+use rgbemu::emulation::instruction_decoder::decode_instruction;
 
 fn get_input_state(event_pump: &EventPump) -> InputState {
   let sdl_state = event_pump.keyboard_state();
@@ -77,15 +59,15 @@ fn main() {
   let debug_window_context = SdlRendererContext::new(debug_canvas, &texture_creator);
   let mut sdl_renderer = SdlRenderer::new(renderer_context, debug_window_context);
 
-  // let mut rom_buffer : Vec<u8> = vec!();
-  // File::open("DMG_ROM.bin").unwrap().read_to_end(&mut rom_buffer).unwrap();
+  let mut rom_buffer : Vec<u8> = Vec::new();
+  File::open("DMG_ROM.bin").unwrap().read_to_end(&mut rom_buffer).unwrap();
 
-  let mut cartridge_data : Vec<u8> = vec!();
-  File::open("./cpu_instrs/individual/04-op r,imm.gb").unwrap().read_to_end(&mut cartridge_data).unwrap();
-  // File::open("./test_roms/Tetris (World).gb").unwrap().read_to_end(&mut cartridge_data).unwrap();
+  let mut cartridge_data: Vec<u8> = Vec::new();
+  //File::open("./cpu_instrs/individual/04-op r,imm.gb").unwrap().read_to_end(&mut cartridge_data).unwrap();
+  File::open("./test_roms/Tetris (World).gb").unwrap().read_to_end(&mut cartridge_data).unwrap();
 
-  // let mut device = Device::new_gb(Some(rom_buffer));
-  let mut device = Device::new_gb(None);
+  let mut device = Device::new_gb(Some(rom_buffer));
+  //let mut device = Device::new_gb(None);
   let cartridge = Cartridge::from_bytes(&cartridge_data).unwrap();
   println!("{:?}", cartridge.header);
 
@@ -132,9 +114,9 @@ fn main() {
 
           last_frame = Instant::now();
           total_cycles = 0;
-          
-          //println!("FPS: {}", 1.0f64 / ((time_spent.subsec_nanos() as f64 + time_spent.as_secs() as f64 * 1e9) / 1e9));
-          //sleep(sleep_time);
+
+          // println!("FPS: {}", 1.0f64 / ((time_spent.subsec_nanos() as f64 + time_spent.as_secs() as f64 * 1e9) / 1e9));
+          // sleep(sleep_time);
         }
       }
     }
