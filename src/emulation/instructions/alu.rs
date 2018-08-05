@@ -1,37 +1,45 @@
-
 use emulation::bitutils::*;
 
 use emulation::device::{Device, ReadWriteRegisters};
-use emulation::registers::{StatusFlag};
-use emulation::instruction::{Operand8, Operand16};
 use emulation::instruction::Operand8::*;
+use emulation::instruction::{Operand16, Operand8};
+use emulation::registers::StatusFlag;
 
 use std::ops::*;
 
-fn add_operand_to_operand(device: &mut Device, a: Operand8, b: Operand8) {
-  let op_a = a.get(device);
-  let op_b = b.get(device);
+pub fn add_operand_8_to_a(device: &mut Device, operand: Operand8) -> u32 {
+  let a = A.get(device);
+  let b = operand.get(device);
 
-  let CarryAddResult { result, carry, half_carry } = carry_add_8(op_a, op_b);
+  let CarryAddResult {
+    result,
+    carry,
+    half_carry,
+  } = carry_add_8(a, b);
 
   device.regs.clear_flag(StatusFlag::N);
   device.regs.set_flag_to(StatusFlag::Z, result == 0);
   device.regs.set_flag_to(StatusFlag::H, half_carry);
   device.regs.set_flag_to(StatusFlag::C, carry);
 
-  a.set(device, result);
-}
+  A.set(device, result);
 
-pub fn add_operand_8_to_a(device: &mut Device, operand: Operand8) -> u32 {
-  add_operand_to_operand(device, A, operand);
-  if operand.is_memref() || operand.is_immediate() { 8 } else { 4 }
+  if operand.is_memref() || operand.is_immediate() {
+    8
+  } else {
+    4
+  }
 }
 
 pub fn subtract_operand_8_from_a(device: &mut Device, operand: Operand8) -> u32 {
   let a = A.get(device);
   let op = operand.get(device);
-  
-  let CarryAddResult { result, carry, half_carry } = borrow_sub_8(a, op);
+
+  let CarryAddResult {
+    result,
+    carry,
+    half_carry,
+  } = borrow_sub_8(a, op);
 
   device.regs.set_flag(StatusFlag::N);
   device.regs.set_flag_to(StatusFlag::Z, result == 0);
@@ -40,12 +48,20 @@ pub fn subtract_operand_8_from_a(device: &mut Device, operand: Operand8) -> u32 
 
   device.regs.a = result;
 
-  if operand.is_memref() || operand.is_immediate() { 8 } else { 4 }
+  if operand.is_memref() || operand.is_immediate() {
+    8
+  } else {
+    4
+  }
 }
 
 pub fn increment_operand_8(device: &mut Device, operand: Operand8) -> u32 {
   let a = operand.get(device);
-  let CarryAddResult { result, carry, half_carry } = carry_add_8(a, 1);
+  let CarryAddResult {
+    result,
+    carry,
+    half_carry,
+  } = carry_add_8(a, 1);
 
   operand.set(device, result);
 
@@ -53,7 +69,11 @@ pub fn increment_operand_8(device: &mut Device, operand: Operand8) -> u32 {
   device.regs.set_flag_to(StatusFlag::Z, result == 0);
   device.regs.set_flag_to(StatusFlag::H, half_carry);
 
-  if operand.is_memref() { 12 } else { 4 }
+  if operand.is_memref() {
+    12
+  } else {
+    4
+  }
 }
 
 pub fn decrement_operand_8(device: &mut Device, operand: Operand8) -> u32 {
@@ -67,7 +87,11 @@ pub fn decrement_operand_8(device: &mut Device, operand: Operand8) -> u32 {
 
   operand.set(device, result);
 
-  if operand.is_memref() { 12 } else { 4 }
+  if operand.is_memref() {
+    12
+  } else {
+    4
+  }
 }
 
 pub fn add_operand_and_carry_to_a(device: &mut Device, operand: Operand8) -> u32 {
@@ -75,7 +99,11 @@ pub fn add_operand_and_carry_to_a(device: &mut Device, operand: Operand8) -> u32
   let op = operand.get(device);
   let carry = device.regs.get_flag(StatusFlag::C);
 
-  let CarryAddResult { result, carry, half_carry } = carry_add_8_prev_carry(a, op, carry);
+  let CarryAddResult {
+    result,
+    carry,
+    half_carry,
+  } = carry_add_8_prev_carry(a, op, carry);
 
   device.regs.clear_flag(StatusFlag::N);
   device.regs.set_flag_to(StatusFlag::Z, result == 0);
@@ -84,14 +112,22 @@ pub fn add_operand_and_carry_to_a(device: &mut Device, operand: Operand8) -> u32
 
   A.set(device, result);
 
-  if operand.is_memref() || operand.is_immediate() { 8 } else { 4 }
+  if operand.is_memref() || operand.is_immediate() {
+    8
+  } else {
+    4
+  }
 }
 
 pub fn add_operand_to_hl(device: &mut Device, operand: Operand16) -> u32 {
   let op = operand.get(device);
   let hl = device.regs.hl();
 
-  let CarryAddResult { result, carry, half_carry } = carry_add_16(hl, op);
+  let CarryAddResult {
+    result,
+    carry,
+    half_carry,
+  } = carry_add_16(hl, op);
 
   device.regs.set_hl(result);
   device.regs.clear_flag(StatusFlag::N);
