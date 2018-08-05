@@ -14,7 +14,14 @@ use emulation::instructions::*;
 use disassembler::to_asm;
 
 pub fn run_instruction(device: &mut Device) -> u32 {
-  //print!("${:04x} ", device.regs.pc);
+  /*println!("af = {:04X}", device.regs.af());
+  println!("bc = {:04X}", device.regs.bc());
+  println!("de = {:04X}", device.regs.de());
+  println!("hl = {:04X}", device.regs.hl());
+  println!("sp = {:04X}", device.regs.sp);
+  println!("pc = {:04X}", device.regs.pc);
+
+  print!("${:04x} ", device.regs.pc);*/
   let instruction = decode_instruction(device);
   // println!("{:?}", instruction);
 

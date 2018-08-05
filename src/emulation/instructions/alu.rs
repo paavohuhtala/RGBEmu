@@ -33,8 +33,6 @@ pub fn subtract_operand_8_from_a(device: &mut Device, operand: Operand8) -> u32 
   
   let CarryAddResult { result, carry, half_carry } = borrow_sub_8(a, op);
 
-  //println!("{} - {} = {}; carry?: {}\n half-carry?: {}", a, op, result, carry, half_carry);
-
   device.regs.set_flag(StatusFlag::N);
   device.regs.set_flag_to(StatusFlag::Z, result == 0);
   device.regs.set_flag_to(StatusFlag::C, carry);
@@ -46,19 +44,26 @@ pub fn subtract_operand_8_from_a(device: &mut Device, operand: Operand8) -> u32 
 }
 
 pub fn increment_operand_8(device: &mut Device, operand: Operand8) -> u32 {
-  add_operand_to_operand(device, operand, Immediate(1));
-  if operand.is_memref() { 8 } else { 4 }
+  let a = operand.get(device);
+  let CarryAddResult { result, carry, half_carry } = carry_add_8(a, 1);
+
+  operand.set(device, result);
+
+  device.regs.clear_flag(StatusFlag::N);
+  device.regs.set_flag_to(StatusFlag::Z, result == 0);
+  device.regs.set_flag_to(StatusFlag::H, half_carry);
+
+  if operand.is_memref() { 12 } else { 4 }
 }
 
 pub fn decrement_operand_8(device: &mut Device, operand: Operand8) -> u32 {
   let op = operand.get(device);
 
-  let CarryAddResult { result, carry, half_carry } = borrow_sub_8(op, 1);
+  let CarryAddResult { result, .. } = borrow_sub_8(op, 1);
 
-  device.regs.clear_flag(StatusFlag::N);
+  device.regs.set_flag(StatusFlag::N);
   device.regs.set_flag_to(StatusFlag::Z, result == 0);
-  device.regs.set_flag_to(StatusFlag::H, half_carry);
-  device.regs.set_flag_to(StatusFlag::C, carry);
+  device.regs.set_flag_to(StatusFlag::H, op & 0xf == 0);
 
   operand.set(device, result);
 

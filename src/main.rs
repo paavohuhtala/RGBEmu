@@ -27,7 +27,6 @@ use rgbemu::emulation::internal_message::RendererMessage::*;
 use rgbemu::emulation::device::Device;
 use rgbemu::emulation::input::InputState;
 use rgbemu::emulation::cartridge::{Cartridge};
-use rgbemu::emulation::instruction_decoder::decode_instruction;
 
 fn get_input_state(event_pump: &EventPump) -> InputState {
   let sdl_state = event_pump.keyboard_state();
@@ -59,15 +58,15 @@ fn main() {
   let debug_window_context = SdlRendererContext::new(debug_canvas, &texture_creator);
   let mut sdl_renderer = SdlRenderer::new(renderer_context, debug_window_context);
 
-  let mut rom_buffer : Vec<u8> = Vec::new();
-  File::open("DMG_ROM.bin").unwrap().read_to_end(&mut rom_buffer).unwrap();
+  //let mut rom_buffer : Vec<u8> = Vec::new();
+  //File::open("DMG_ROM.bin").unwrap().read_to_end(&mut rom_buffer).unwrap();
 
   let mut cartridge_data: Vec<u8> = Vec::new();
-  //File::open("./cpu_instrs/individual/04-op r,imm.gb").unwrap().read_to_end(&mut cartridge_data).unwrap();
-  File::open("./test_roms/Tetris (World).gb").unwrap().read_to_end(&mut cartridge_data).unwrap();
+  File::open("./cpu_instrs/individual/06-ld r,r.gb").unwrap().read_to_end(&mut cartridge_data).unwrap();
+  //File::open("./test_roms/Tetris (World).gb").unwrap().read_to_end(&mut cartridge_data).unwrap();
 
-  let mut device = Device::new_gb(Some(rom_buffer));
-  //let mut device = Device::new_gb(None);
+  //let mut device = Device::new_gb(Some(rom_buffer));
+  let mut device = Device::new_gb(None);
   let cartridge = Cartridge::from_bytes(&cartridge_data).unwrap();
   println!("{:?}", cartridge.header);
 
@@ -78,8 +77,13 @@ fn main() {
   let mut total_cycles = 0u32;
   let mut last_frame = Instant::now();
 
+  let mut stdin = std::io::stdin();
+  let mut dummy_buffer = [0u8; 2];
+
   'main_loop: loop {
     total_cycles += device.run_tick();
+    // stdin.read_exact(&mut dummy_buffer).unwrap();
+
     while let Some(msg) = device.next_renderer_message() {
       match msg {
         PrepareNextFrame => {

@@ -263,6 +263,25 @@ impl<'a> Renderer for SdlRenderer<'a> {
       let window_line_rect = Rect::new(0, scanline - window_y as i32, 256, 256);
       self.state.window_buffer.blit(window_line_rect, self.screen_buffer_cpu.as_mut(), Rect::new(window_x, window_y, 256, 256)).unwrap();
     }
+
+    for sprite in self.state.sprites.iter() {
+      if sprite.x == 0 {
+        continue;
+      }
+
+      let x = sprite.x as i32;
+      let y = sprite.y as i32;
+      let width = 8;
+      let height = device.bus.video.get_sprite_height() as i32;
+
+      if scanline >= y && scanline < y + height {
+        let tile_rect = self.state.get_tile_rect(sprite.pattern);
+        let displayed_line = scanline - y;
+        let source_rect = Rect::new(tile_rect.x(), tile_rect.y() + displayed_line, width as u32, 1);
+        let target_rect = Rect::new(x - width, scanline as i32, width as u32, 1);
+        self.state.tile_cache.blit(source_rect, self.screen_buffer_cpu.as_mut(), target_rect).unwrap();
+      }
+    }
   }
 
   fn prepare_frame(&mut self, device: &Device) {

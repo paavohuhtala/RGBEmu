@@ -225,6 +225,14 @@ impl VideoController {
     }
   }
 
+  pub fn get_sprite_height(&self) -> u8 {
+    if self.lcd_control.contains(LCDControlRegister::ObjSize) {
+      16
+    } else {
+      8
+    }
+  }
+ 
   // Timings and basic principle from
   // http://imrannazar.com/GameBoy-Emulation-in-JavaScript:-GPU-Timings
   pub fn update(&mut self, elapsed_clocks: u32) -> InternalMessage {

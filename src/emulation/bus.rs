@@ -45,7 +45,8 @@ pub struct Bus {
   pub timer: TimerRegisters,
   audio: AudioController,
   pub video: VideoController,
-  pub interrupt: InterruptRegisters
+  pub interrupt: InterruptRegisters,
+  serial_buffer: u8
 }
 
 impl Bus {
@@ -64,7 +65,8 @@ impl Bus {
       timer: TimerRegisters::new(),
       audio: AudioController::new(),
       video: VideoController::new(device),
-      interrupt: InterruptRegisters::new()
+      interrupt: InterruptRegisters::new(),
+      serial_buffer: 0
     }
   }
 
@@ -145,7 +147,12 @@ impl AddressMapper for Bus {
       Audio(audio_location) => self.audio.write_8(audio_location, value),
       Video(video_location) => self.video.write_8(video_location, value),
       Serial(SerialRegister::Data) => {
-        println!("Serial: {}", value);
+        self.serial_buffer = value;
+        InternalMessage::None
+      },
+      Serial(SerialRegister::Control) if value == 0x81 => {
+        println!("Serial: {}", self.serial_buffer);
+        // TODO: This should not be immediate.
         InternalMessage::TriggerInterrupt(Interrupt::EndOfSerialIO)
       },
       _ => {
@@ -160,7 +167,9 @@ impl AddressMapper for Bus {
             }
           },
           Joypad => self.input.write_8(value),
-          Serial(_) => (),
+          Serial(SerialRegister::Control) => {
+            println!("Unknown serial control command: {}", value);
+          } 
           Timer(register) => self.timer.write_8(register, value),
           InterruptRequest => self.interrupt.set_request(value),
           BootromUnmap => self.is_booting = value != 1, 
