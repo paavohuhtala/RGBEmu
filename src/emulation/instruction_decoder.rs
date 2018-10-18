@@ -1,5 +1,5 @@
 
-use std::io::{Cursor, Read, Seek};
+use std::io::{Cursor, Read};
 
 use emulation::bitutils::*;
 use emulation::instruction::{Instruction, Operand8, Operand16, ConditionCode};

@@ -15,6 +15,9 @@ extern crate sdl2;
 #[cfg(test)]
 mod tests;
 
+#[cfg(test)]
+pub mod test_util;
+
 pub mod emulation;
 pub mod disassembler;
 pub mod rendering;

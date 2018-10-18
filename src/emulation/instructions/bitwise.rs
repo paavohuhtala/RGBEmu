@@ -15,9 +15,16 @@ enum BitwiseOp {
   Xor
 }
 
-fn do_bitwise_op<F>(device: &mut Device, operand: Operand8, op_f: F, op_name: BitwiseOp) -> u32 where F: Fn(u8, u8) -> u8 {
+fn do_bitwise_op(device: &mut Device, operand: Operand8, operation: BitwiseOp) -> u32 {
   let a = A.get(device);
   let op = operand.get(device);
+
+  let op_f = match operation {
+    BitwiseOp::And => u8::bitand,
+    BitwiseOp::Or => u8::bitor,
+    BitwiseOp::Xor => u8::bitxor
+  };
+
   let res = op_f(a, op);
 
   device.regs.clear_flag(StatusFlag::C);
@@ -31,15 +38,15 @@ fn do_bitwise_op<F>(device: &mut Device, operand: Operand8, op_f: F, op_name: Bi
 }
 
 pub fn and_with_a(device: &mut Device, operand: Operand8) -> u32 {
-  do_bitwise_op(device, operand, u8::bitand, BitwiseOp::And)
+  do_bitwise_op(device, operand, BitwiseOp::And)
 }
 
 pub fn or_with_a(device: &mut Device, operand: Operand8) -> u32 {
-  do_bitwise_op(device, operand, u8::bitor, BitwiseOp::Or)
+  do_bitwise_op(device, operand, BitwiseOp::Or)
 }
 
 pub fn xor_with_a(device: &mut Device, operand: Operand8) -> u32 {
-  do_bitwise_op(device, operand, u8::bitxor, BitwiseOp::Xor)
+  do_bitwise_op(device, operand, BitwiseOp::Xor)
 }
 
 pub fn test_bit(device: &mut Device, operand: Operand8, n: u8) -> u32 {

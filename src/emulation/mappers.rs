@@ -57,7 +57,7 @@ impl Mapper for RomOnly {
     }
   }
 
-  fn write_8(&mut self, cart: &mut CartridgeMemory, address: u16, value: u8) {
+  fn write_8(&mut self, _cart: &mut CartridgeMemory, address: u16, value: u8) {
     match address {
       _ => println!("Tried to write to a cartridge without a mapper! ({:?} <- {:X})", address, value)
     }

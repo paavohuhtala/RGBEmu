@@ -1,9 +1,5 @@
-
-use std;
-
 use emulation::constants::*;
 use rendering::*;
-use emulation::video::controller::GbPalette;
 
 use sdl2;
 use sdl2::render::{Texture, Canvas};
@@ -37,10 +33,6 @@ impl RendererColor for SdlColor {
 impl RendererPalette<SdlColor> for SdlPalette {
   fn from_colors(colors: [Color; 4]) -> SdlPalette {
     let mut palette_colors = [Color::RGB(255, 0, 255); 256];
-    /*palette_colors[0] = Color::RGB(255, 0, 0);
-    palette_colors[1] = Color::RGB(0, 255, 0);
-    palette_colors[2] = Color::RGB(0, 0, 255);
-    palette_colors[3] = Color::RGB(255, 255, 255);*/
     palette_colors[0] = colors[0];
     palette_colors[1] = colors[1];
     palette_colors[2] = colors[2];

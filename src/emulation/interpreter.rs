@@ -213,6 +213,7 @@ pub fn run_instruction(device: &mut Device) -> u32 {
 
     DisableInterrupts => disable_interrupts(device),
     EnableInterrupts => enable_interrupts(device),
+    BCDCorrectA => bcd_correct_a(device),
     Halt => {
       device.halt();
       4

@@ -17,14 +17,14 @@ pub trait RendererColor where Self: Sized {
 
   fn from_gb_color(color: u8) -> Self {
     match color {
-      /*0 => Self::from_rgb_tuple(LIGHTEST_GREEN),
+      0 => Self::from_rgb_tuple(LIGHTEST_GREEN),
       1 => Self::from_rgb_tuple(LIGHT_GREEN),
       2 => Self::from_rgb_tuple(DARK_GREEN),
-      3 => Self::from_rgb_tuple(DARKEST_GREEN),*/
-      0 => Self::from_rgb(240, 240, 240),
+      3 => Self::from_rgb_tuple(DARKEST_GREEN),
+      /*0 => Self::from_rgb(240, 240, 240),
       1 => Self::from_rgb(100, 100, 100),
       2 => Self::from_rgb(25, 25, 25),
-      3 => Self::from_rgb(0, 0, 0),
+      3 => Self::from_rgb(0, 0, 0),*/
       /*3 => Self::from_rgb(240, 240, 240),
       2 => Self::from_rgb(100, 100, 100),
       1 => Self::from_rgb(25, 25, 25),
@@ -64,8 +64,8 @@ pub struct NullRenderer { }
 
 impl Renderer for NullRenderer {
   fn present(&mut self) { }
-  fn prepare_frame(&mut self, device: &Device) { }
-  fn draw_scanline(&mut self, device: &Device, scanline: u8) { }
+  fn prepare_frame(&mut self, _device: &Device) { }
+  fn draw_scanline(&mut self, _device: &Device, _scanline: u8) { }
 }
 
 #[derive(Default, Clone, Copy)]

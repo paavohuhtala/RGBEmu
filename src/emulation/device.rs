@@ -1,10 +1,6 @@
 
 use std::io::{stdin, Read};
 use std::collections::HashSet;
-use std::thread::{sleep};
-use std::sync::Arc;
-use std::time::Duration;
-use time::{precise_time_ns};
 
 use emulation::bitutils::*;
 use emulation::internal_message::{InternalMessage, RendererMessage};

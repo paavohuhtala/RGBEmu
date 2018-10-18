@@ -1,7 +1,5 @@
 
-use emulation::bitutils::{carry_add_8, carry_add_16, CarryAddResult};
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Registers {
   pub a: u8,
   pub f: u8,

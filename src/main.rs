@@ -8,11 +8,10 @@ extern crate sdl2;
 
 use std::time::{Duration, Instant};
 use std::io::prelude::*;
-use std::io::Cursor;
 use std::fs::File;
-use std::thread::sleep;
 
-use time::{precise_time_ns};
+// use std::thread::sleep;
+// use time::{precise_time_ns};
 
 use sdl2::EventPump;
 use sdl2::event::Event;
@@ -43,6 +42,10 @@ fn get_input_state(event_pump: &EventPump) -> InputState {
   }
 }
 
+fn wait_keypress(stdin: &mut std::io::Read) -> std::io::Result<()> {
+  stdin.read_exact(&mut [0u8; 2])
+}
+
 fn main() {
   let context = sdl2::init().unwrap();
   let video = context.video().unwrap();
@@ -58,15 +61,15 @@ fn main() {
   let debug_window_context = SdlRendererContext::new(debug_canvas, &texture_creator);
   let mut sdl_renderer = SdlRenderer::new(renderer_context, debug_window_context);
 
-  //let mut rom_buffer : Vec<u8> = Vec::new();
-  //File::open("DMG_ROM.bin").unwrap().read_to_end(&mut rom_buffer).unwrap();
+  let mut rom_buffer : Vec<u8> = Vec::new();
+  File::open("DMG_ROM.bin").unwrap().read_to_end(&mut rom_buffer).unwrap();
 
   let mut cartridge_data: Vec<u8> = Vec::new();
-  File::open("./cpu_instrs/individual/06-ld r,r.gb").unwrap().read_to_end(&mut cartridge_data).unwrap();
-  //File::open("./test_roms/Tetris (World).gb").unwrap().read_to_end(&mut cartridge_data).unwrap();
+  // File::open("./cpu_instrs/individual/06-ld r,r.gb").unwrap().read_to_end(&mut cartridge_data).unwrap();
+  File::open("./test_roms/Tetris (World).gb").unwrap().read_to_end(&mut cartridge_data).unwrap();
 
-  //let mut device = Device::new_gb(Some(rom_buffer));
-  let mut device = Device::new_gb(None);
+  let mut device = Device::new_gb(Some(rom_buffer));
+  // let mut device = Device::new_gb(None);
   let cartridge = Cartridge::from_bytes(&cartridge_data).unwrap();
   println!("{:?}", cartridge.header);
 
@@ -77,8 +80,7 @@ fn main() {
   let mut total_cycles = 0u32;
   let mut last_frame = Instant::now();
 
-  let mut stdin = std::io::stdin();
-  let mut dummy_buffer = [0u8; 2];
+  // let mut stdin = std::io::stdin();
 
   'main_loop: loop {
     total_cycles += device.run_tick();
@@ -102,7 +104,6 @@ fn main() {
           //last_frame = last_update;
 
           let new_input_state = get_input_state(&event_pump);
-          device.update_input(new_input_state);
 
           for event in event_pump.poll_iter() {
             match event {
@@ -111,10 +112,12 @@ fn main() {
             }
           }
 
+          device.update_input(new_input_state);
+
           let time_spent = Instant::now().duration_since(last_frame);
           let expected_time = Duration::new(0, ((1f64 / GB_CYCLES_PER_SEC as f64) * total_cycles as f64 * 1e9) as u32);
 
-          let sleep_time = if time_spent > expected_time { Duration::new(0, 0) } else { expected_time - time_spent };
+          // let sleep_time = if time_spent > expected_time { Duration::new(0, 0) } else { expected_time - time_spent };
 
           last_frame = Instant::now();
           total_cycles = 0;

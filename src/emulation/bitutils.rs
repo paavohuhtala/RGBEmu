@@ -50,14 +50,17 @@ pub trait BitExtensions where Self : Sized {
 }
 
 impl BitExtensions for u8 {
+  #[inline]
   fn get_bit(self, n: u8) -> bool {
     self & (1 << n) != 0
   }
 
+  #[inline]
   fn set_bit(self, n: u8) -> u8 {
     self | (1 << n)
   }
 
+  #[inline]
   fn clear_bit(self, n: u8) -> u8 {
     self & !(1 << n)
   }
@@ -68,6 +71,8 @@ pub trait BoolExtensions {
 }
 
 impl BoolExtensions for bool {
+
+  #[inline]
   fn to_u8(self) -> u8 {
     if self { 1 } else { 0 }
   }
