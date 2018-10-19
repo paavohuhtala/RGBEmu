@@ -80,6 +80,12 @@ impl Bus {
     }
   }
 
+  pub fn oam_dma_transfer(&mut self, address: u16) {
+    for i in 0 .. 160 {
+      self.video.oam[i as usize] = self.read_8(self.resolve_address(address + i));
+    }
+  }
+
   pub fn read_to_buffer_mut(&self, buffer: &mut [u8], address: u16, length: u16) {
     self.read_to_buffer(buffer, address, length);
   }

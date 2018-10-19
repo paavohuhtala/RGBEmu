@@ -163,9 +163,7 @@ impl Device {
       }
       InternalMessage::RendererMessage(msg) => self.renderer_messages.push(msg),
       InternalMessage::DMATransfer { from } => {
-        let mut buffer = [0u8; 160];
-        self.bus.read_to_buffer(&mut buffer, from, 160);
-        self.bus.video.oam = buffer;
+        self.bus.oam_dma_transfer(from);
       }
       _ => panic!("Unsupported internal message: {:?}", message)
     }
