@@ -213,8 +213,8 @@ impl<'a> Renderer for SdlRenderer<'a> {
   fn present(&mut self) {
     self.state.tile_cache.blit(None, self.debug_buffer_cpu.surface_mut(), None).unwrap();
     self.state.background_buffer.blit(None, self.debug_buffer_cpu.surface_mut(), Rect::new(0, 140, 256, 256)).unwrap();
-    self.debug_buffer_cpu.set_draw_color(Color::RGB(255, 0, 0));
-    self.debug_buffer_cpu.draw_rect(Rect::new(self.debug_data.scroll.0 as i32, self.debug_data.scroll.1 as i32 + 140, 160, 140)).unwrap();
+    self.debug_buffer_cpu.set_draw_color(Color::RGB(255, 255, 255));
+    self.debug_buffer_cpu.draw_rect(Rect::new(self.debug_data.scroll.0 as i32, self.debug_data.scroll.1 as i32 + 140, 160, 144)).unwrap();
 
     let screen_buffer = self.screen_buffer_cpu.without_lock().unwrap();
 
