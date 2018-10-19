@@ -25,8 +25,8 @@ bitfield! {
   pub struct TimerControlRegister(u8);
   impl Debug;
 
-  get_input_clock, _: 2, 3;
-  get_timer_enabled, _: 1;
+  get_input_clock, _: 1, 0;
+  get_timer_enabled, _: 2;
 }
 
 impl TimerControlRegister {
@@ -83,6 +83,7 @@ impl TimerRegisters {
   }
 
   pub fn resolve_address(&self, addr: u16) -> TimerRegister {
+    println!("Timer register: {:04x}", addr);
     match addr {
       0xFF04 => TimerRegister::Divider,
       0xFF05 => TimerRegister::Counter,
@@ -99,7 +100,10 @@ impl TimerRegisters {
         self.counter = 0;
       },
       TimerRegister::Modulo => self.modulo = value,
-      TimerRegister::Control => self.control = TimerControlRegister(value)
+      TimerRegister::Control => {
+        self.control = TimerControlRegister(value);
+        println!("Timer control: {:b}", value);
+      }
     }
   }
 
