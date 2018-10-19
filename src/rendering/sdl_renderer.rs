@@ -261,16 +261,17 @@ impl<'a> Renderer for SdlRenderer<'a> {
         continue;
       }
 
-      let x = sprite.x as i32;
-      let y = sprite.y as i32;
-      let width = 8;
+      let sprite_width = 8;
+      let x = sprite.x as i32 - sprite_width;
+      let y = sprite.y as i32 - 16;
       let height = device.bus.video.get_sprite_height() as i32;
 
       if scanline >= y && scanline < y + height {
         let tile_rect = self.state.get_tile_rect(sprite.pattern);
         let displayed_line = scanline - y;
-        let source_rect = Rect::new(tile_rect.x(), tile_rect.y() + displayed_line, width as u32, 1);
-        let target_rect = Rect::new(x - width, scanline as i32, width as u32, 1);
+        let source_rect = Rect::new(tile_rect.x(), tile_rect.y() + displayed_line, sprite_width as u32, 1);
+        let target_rect = Rect::new(x, scanline as i32, sprite_width as u32, 1);
+
         self.state.tile_cache.blit(source_rect, self.screen_buffer_cpu.as_mut(), target_rect).unwrap();
       }
     }
@@ -292,44 +293,5 @@ impl<'a> Renderer for SdlRenderer<'a> {
     if device.bus.video.is_window_enabled() {
       self.draw_window_buffer();
     }
-
-    /*for y in 0 .. 32 {
-      for x in 0 .. 32 {
-        let tile = self.state.get_background_tile(x, y);
-        let row = (tile / 16) as i32;
-        let column = (tile % 16) as i32;
-        let cache_rect = Rect::new(column * 8, row * 8, 8, 8);
-        let target_rect = Rect::new((x as i32) * 8, (y as i32) * 8, 8, 8);
-        self.state.tile_cache.blit(Some(cache_rect), self.state.background_buffer.as_mut(), Some(target_rect)).unwrap();
-      }
-    }
-
-    let scroll_rect = Rect::new(device.bus.video.scroll_x as i32, device.bus.video.scroll_y as i32, 160, 144);
-    self.state.background_buffer.blit(None, self.screen_buffer_cpu.as_mut(), Some(scroll_rect)).unwrap();*/
-
-    /*if device.bus.video.is_window_enabled() {
-      for y in 0 .. 32 {
-        for x in 0 .. 32 {
-          let tile = self.state.get_window_tile(x, y);
-          let row = (tile / 16) as i32;
-          let column = (tile % 16) as i32;
-          let cache_rect = Rect::new(column * 8, row * 8, 8, 8);
-          let target_rect = Rect::new((x as i32) * 8, (y as i32) * 8, 8, 8);
-          self.state.tile_cache.blit(Some(cache_rect), self.state.window_buffer.as_mut(), Some(target_rect)).unwrap();
-        }
-      }
-
-      let window_rect = Rect::new(device.bus.video.window_x as i32, device.bus.video.window_y as i32, 160, 144);
-      self.state.window_buffer.blit(None, self.screen_buffer_cpu.as_mut(), Some(window_rect)).unwrap();
-    }
-
-    for sprite in self.state.sprites.iter() {
-      if sprite.x == 0 { continue; }
-      let tile_rect = self.state.get_tile_rect(sprite.pattern);
-      let target_rect = Rect::new(sprite.x as i32 - 8, sprite.y as i32 - 16, 8, 8);
-      self.state.tile_cache.blit(Some(tile_rect), self.screen_buffer_cpu.as_mut(), Some(target_rect)).unwrap();
-    }
-
-    self.screen_buffer_gpu.update(None, self.screen_buffer_cpu.without_lock().unwrap(), 160 * 3).unwrap();*/
   }
 }
