@@ -162,9 +162,8 @@ pub fn decrement_operand_16(device: &mut Device, operand: Operand16) -> u32 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::emulation::instruction::Operand8::*;
     use crate::emulation::registers::StatusFlag;
-    use test_util::get_device;
+    use crate::test_util::get_device;
 
     #[test]
     fn simple_add() {

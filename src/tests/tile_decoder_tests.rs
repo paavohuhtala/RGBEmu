@@ -1,4 +1,4 @@
-use rendering::*;
+use crate::rendering::*;
 
 #[test]
 fn check_copyright_symbol() {

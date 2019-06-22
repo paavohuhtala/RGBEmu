@@ -1,6 +1,5 @@
 use std;
 use std::fs::File;
-use std::fs::{self, DirEntry};
 use std::io::Read;
 use std::path::Path;
 
