@@ -2,11 +2,11 @@
 use std::fmt;
 use std::fmt::*;
 
-use emulation::instruction::{Operand8, Operand16};
-use emulation::instruction::*;
-use emulation::instruction::Instruction::*;
-use emulation::instruction::Operand8::*;
-use emulation::instruction::Operand16::*;
+use crate::emulation::instruction::{Operand8, Operand16};
+use crate::emulation::instruction::*;
+use crate::emulation::instruction::Instruction::*;
+use crate::emulation::instruction::Operand8::*;
+use crate::emulation::instruction::Operand16::*;
 
 impl Display for Operand8 {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {

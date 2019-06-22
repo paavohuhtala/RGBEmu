@@ -1,8 +1,8 @@
 use std::panic::catch_unwind;
 
-use emulation::instruction::Instruction::*;
-use emulation::instruction::*;
-use emulation::instruction_decoder::*;
+use crate::emulation::instruction::Instruction::*;
+use crate::emulation::instruction::*;
+use crate::emulation::instruction_decoder::*;
 
 struct MockDevice {
   data: Vec<u8>,

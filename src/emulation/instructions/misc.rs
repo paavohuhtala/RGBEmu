@@ -1,5 +1,5 @@
-use emulation::device::{Device};
-use emulation::registers::StatusFlag;
+use crate::emulation::device::{Device};
+use crate::emulation::registers::StatusFlag;
 
 pub fn enable_interrupts(device: &mut Device) -> u32 {
   device.interrupts_enabled = true;

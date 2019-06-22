@@ -3,6 +3,7 @@ name = "rgbemu"
 version = "0.1.0"
 authors = ["Paavo Huhtala <paavo.huhtala@gmail.com>"]
 build = "build.rs"
+edition = '2018'
 
 [lib]
 name = "rgbemu"

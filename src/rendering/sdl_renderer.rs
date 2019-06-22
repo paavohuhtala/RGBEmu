@@ -1,5 +1,4 @@
-use emulation::constants::*;
-use rendering::*;
+use crate::rendering::*;
 
 use sdl2;
 use sdl2::render::{Texture, Canvas};

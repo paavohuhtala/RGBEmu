@@ -1,10 +1,8 @@
 
-use emulation::bitutils::*;
-use emulation::device::{Device, ReadWriteRegisters};
-use emulation::registers::{StatusFlag};
-use emulation::instruction::{Operand8, Operand16};
-use emulation::instruction::Operand8::*;
-use emulation::instruction::Operand16::*;
+use crate::emulation::bitutils::*;
+use crate::emulation::device::{Device, ReadWriteRegisters};
+use crate::emulation::registers::{StatusFlag};
+use crate::emulation::instruction::{Operand8, Operand16};
 
 pub fn move_immediate_16(device: &mut Device, to: Operand16, value: u16) -> u32 {
   device.set_operand_16(to, value);

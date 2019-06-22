@@ -1,5 +1,5 @@
 
-use emulation::device::{Device, ReadWriteRegisters};
+use crate::emulation::device::{Device, ReadWriteRegisters};
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Operand8 {

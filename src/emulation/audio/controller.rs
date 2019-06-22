@@ -1,6 +1,6 @@
 
-use emulation::address_mapper::AddressMapper;
-use emulation::internal_message::{InternalMessage};
+use crate::emulation::address_mapper::AddressMapper;
+use crate::emulation::internal_message::{InternalMessage};
 
 pub struct AudioController {
   ram: [u8; 0x30]

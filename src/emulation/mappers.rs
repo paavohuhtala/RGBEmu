@@ -1,6 +1,6 @@
 
-use emulation::constants::*;
-use emulation::cartridge::{CartridgeMemory, CartridgeType};
+use crate::emulation::constants::*;
+use crate::emulation::cartridge::{CartridgeMemory, CartridgeType};
 
 pub trait Mapper {
   //const TYPE: MapperType;
@@ -31,11 +31,11 @@ impl RomOnly {
   }
 
   fn resolve_address(&self, address: u16) -> RomOnlyLocation {
-    use emulation::mappers::RomOnlyLocation::*;
+    use crate::emulation::mappers::RomOnlyLocation::*;
     match address {
-      ROM_BANK_0_START ... ROM_BANK_0_END => RomBank0(address),
-      ROM_BANK_N_START ... ROM_BANK_N_END => RomBankN(address - ROM_BANK_N_START),
-      CARTRIDGE_RAM_START ... CARTRIDGE_RAM_END => Ram(address - CARTRIDGE_RAM_START),
+      ROM_BANK_0_START ..= ROM_BANK_0_END => RomBank0(address),
+      ROM_BANK_N_START ..= ROM_BANK_N_END => RomBankN(address - ROM_BANK_N_START),
+      CARTRIDGE_RAM_START ..= CARTRIDGE_RAM_END => Ram(address - CARTRIDGE_RAM_START),
       _ => panic!("Tried to resolve an invalid address: ${:04x}", address)
     }
   }
@@ -45,7 +45,7 @@ impl Mapper for RomOnly {
   //const TYPE: MapperType = MapperType::RomOnly;
 
   fn read_8(&self, memory: &CartridgeMemory, address: u16) -> u8 {
-    use emulation::mappers::RomOnlyLocation::*;
+    use crate::emulation::mappers::RomOnlyLocation::*;
     let location = self.resolve_address(address);
     match location {
       RomBank0(offset) => memory.rom[offset as usize],
@@ -64,8 +64,8 @@ impl Mapper for RomOnly {
   }
 }
 
-impl Mapper {
-  pub fn from_cartridge_type(cartridge_type: CartridgeType) -> Box<Mapper> {
+impl dyn Mapper {
+  pub fn from_cartridge_type(cartridge_type: CartridgeType) -> Box<dyn Mapper> {
     match cartridge_type.mapper {
       MapperType::RomOnly => RomOnly::new(),
       MapperType::MBC1 => MBC1::new(cartridge_type),
@@ -121,15 +121,15 @@ impl MBC1 {
   }
 
   fn resolve_address(&self, address: u16) -> MBC1Location {
-    use emulation::mappers::MBC1Location::*;
+    use crate::emulation::mappers::MBC1Location::*;
 
     let rom_bank = self.get_rom_bank();
     let ram_bank = self.get_ram_bank();
 
     match address {
-      ROM_BANK_0_START ... ROM_BANK_0_END       => RomBank0((address - ROM_BANK_0_START) as u32),
-      ROM_BANK_N_START ... ROM_BANK_N_END       => RomBankN(rom_bank as u32 * ROM_BANK_SIZE as u32 + (address - ROM_BANK_N_START) as u32),
-      CARTRIDGE_RAM_START ... CARTRIDGE_RAM_END => Ram(ram_bank as u32 * RAM_BANK_SIZE as u32 + (address - CARTRIDGE_RAM_START) as u32),
+      ROM_BANK_0_START ..= ROM_BANK_0_END       => RomBank0((address - ROM_BANK_0_START) as u32),
+      ROM_BANK_N_START ..= ROM_BANK_N_END       => RomBankN(rom_bank as u32 * ROM_BANK_SIZE as u32 + (address - ROM_BANK_N_START) as u32),
+      CARTRIDGE_RAM_START ..= CARTRIDGE_RAM_END => Ram(ram_bank as u32 * RAM_BANK_SIZE as u32 + (address - CARTRIDGE_RAM_START) as u32),
       _ => panic!("Tried to read from an invalid address: ${:04x}", address)
     }
   }
@@ -139,7 +139,7 @@ impl Mapper for MBC1 {
   //const TYPE: MapperType = MapperType::MBC1;
 
   fn read_8(&self, memory: &CartridgeMemory, address: u16) -> u8 {
-    use emulation::mappers::MBC1Location::*;
+    use crate::emulation::mappers::MBC1Location::*;
     let location = self.resolve_address(address);
     // println!("Cart R: {:?}", location);
     match location {
@@ -157,10 +157,10 @@ impl Mapper for MBC1 {
     println!("MBC W: 0x{:04X} <- 0x{:02X}", address, value);
 
     match address {
-      0x0000 ... 0x1FFF => {
+      0x0000 ..= 0x1FFF => {
         self.ram_enabled = value & 0b1010 > 0;
       },
-      0xA000 ... 0xBFFF => {
+      0xA000 ..= 0xBFFF => {
         let offset = ((address - 0xA000) * ram_bank as u16) as usize;
 
         if memory.ram.len() <= offset {
@@ -170,14 +170,14 @@ impl Mapper for MBC1 {
 
         memory.ram[offset] = value;
       },
-      0x2000 ... 0x3FFF => {
+      0x2000 ..= 0x3FFF => {
         let bank_bits = if value == 0 { 1 } else { value };
         self.rom_bank = bank_bits & 0b11111;
       },
-      0x4000 ... 0x5FFF => {
+      0x4000 ..= 0x5FFF => {
         self.ram_bank_or_upper_rom_bits = value;
       },
-      0x6000 ... 0x7FFF => {
+      0x6000 ..= 0x7FFF => {
         if value == 0 {
           self.rom_banking_mode = true;
         } else if value == 1 {

@@ -2,20 +2,20 @@
 use std::io::{stdin, Read};
 use std::collections::HashSet;
 
-use emulation::bitutils::*;
-use emulation::internal_message::{InternalMessage, RendererMessage};
-use emulation::constants::*;
-use emulation::registers::{Registers};
-use emulation::address_mapper::{AddressMapper, Addressable};
-use emulation::bus::{Bus};
-use emulation::input::InputState;
+use crate::emulation::bitutils::*;
+use crate::emulation::internal_message::{InternalMessage, RendererMessage};
+use crate::emulation::constants::*;
+use crate::emulation::registers::{Registers};
+use crate::emulation::address_mapper::{AddressMapper, Addressable};
+use crate::emulation::bus::{Bus};
+use crate::emulation::input::InputState;
 
-use emulation::interrupt::{Interrupt};
-use emulation::instruction::{Instruction, Operand8, Operand16};
-use emulation::instruction::Operand8::*;
-use emulation::instruction::Operand16::*;
-use emulation::instruction_decoder::*;
-use emulation::interpreter;
+use crate::emulation::interrupt::{Interrupt};
+use crate::emulation::instruction::{Instruction, Operand8, Operand16};
+use crate::emulation::instruction::Operand8::*;
+use crate::emulation::instruction::Operand16::*;
+use crate::emulation::instruction_decoder::*;
+use crate::emulation::interpreter;
 
 #[derive(Debug, Clone, Copy)]
 pub enum DeviceType {
@@ -165,7 +165,6 @@ impl Device {
       InternalMessage::DMATransfer { from } => {
         self.bus.oam_dma_transfer(from);
       }
-      _ => panic!("Unsupported internal message: {:?}", message)
     }
   }
 

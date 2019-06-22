@@ -1,7 +1,7 @@
 
-use emulation::internal_message::{InternalMessage, RendererMessage};
-use emulation::interrupt::Interrupt;
-use emulation::device::DeviceType;
+use crate::emulation::internal_message::{InternalMessage, RendererMessage};
+use crate::emulation::interrupt::Interrupt;
+use crate::emulation::device::DeviceType;
 
 bitflags! {
   #[derive(Default)]
@@ -58,7 +58,7 @@ pub enum VideoMemoryLocation {
   VramBank
 }
 
-use emulation::video::controller::VideoMemoryLocation::*;
+use crate::emulation::video::controller::VideoMemoryLocation::*;
 
 #[derive(Debug)]
 enum RenderingMode {

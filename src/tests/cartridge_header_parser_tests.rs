@@ -5,7 +5,7 @@ use std::io::Read;
 use std::fs::{self, DirEntry};
 use std::path::Path;
 
-use emulation::cartridge::CartridgeHeader;
+use crate::emulation::cartridge::CartridgeHeader;
 
 fn load_roms() -> Vec<(String, Vec<u8>)> {
   let path = Path::new("./test_roms/");

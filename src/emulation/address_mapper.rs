@@ -1,5 +1,5 @@
 
-use emulation::internal_message::{InternalMessage};
+use crate::emulation::internal_message::{InternalMessage};
 
 pub trait AddressMapper {
   type T;

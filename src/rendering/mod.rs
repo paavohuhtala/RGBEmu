@@ -1,9 +1,9 @@
 
-use emulation::bitutils::*;
-use emulation::constants::*;
-use emulation::device::Device;
-use emulation::bus::Bus;
-use emulation::video::controller::GbPalette;
+use crate::emulation::bitutils::*;
+use crate::emulation::constants::*;
+use crate::emulation::device::Device;
+use crate::emulation::bus::Bus;
+use crate::emulation::video::controller::GbPalette;
 
 pub trait RendererColor where Self: Sized {
   const TRANSPARENT: Self;

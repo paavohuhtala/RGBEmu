@@ -1,5 +1,5 @@
 
-use emulation::interrupt::Interrupt;
+use crate::emulation::interrupt::Interrupt;
 
 #[derive(Debug, Clone)]
 pub enum InternalMessage {

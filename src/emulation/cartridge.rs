@@ -1,13 +1,11 @@
-
-use std;
 use std::fmt;
 
-use emulation::constants::*;
-use emulation::mappers::{MapperType, Mapper};
+use crate::emulation::constants::*;
+use crate::emulation::mappers::{MapperType, Mapper};
 
 pub struct Cartridge {
   pub memory: CartridgeMemory,
-  pub mapper: Box<Mapper>,
+  pub mapper: Box<dyn Mapper>,
   pub header: CartridgeHeader
 }
 
@@ -62,7 +60,7 @@ impl CartridgeType {
   pub fn new(id: u8, rom_size_id: u8, ram_size_id: u8) -> CartridgeType {
     // 32 kb << N
     let rom_size = match rom_size_id {
-      b @ 0 ... 7 => 0x8000 << b,
+      b @ 0 ..= 7 => 0x8000 << b,
       0x52 => 72 * ROM_BANK_SIZE,
       0x53 => 80 * ROM_BANK_SIZE,
       0x54 => 96 * ROM_BANK_SIZE,

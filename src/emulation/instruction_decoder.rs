@@ -1,9 +1,8 @@
-
 use std::io::{Cursor, Read};
 
-use emulation::bitutils::*;
-use emulation::instruction::{Instruction, Operand8, Operand16, ConditionCode};
-use emulation::instruction::Instruction::*;
+use crate::emulation::bitutils::*;
+use crate::emulation::instruction::{Instruction, Operand8, Operand16, ConditionCode};
+use crate::emulation::instruction::Instruction::*;
 
 pub trait ReadOnlyByteStream {
   fn read_next_byte(&mut self) -> u8;
@@ -44,7 +43,7 @@ fn to_condition_code(b2: u8, b1: u8, b0: u8) -> ConditionCode {
 
 // Partially based on:
 // http://www.classiccmp.org/dunfield/r/8080.txt
-pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
+pub fn decode_instruction(device: &mut impl ReadOnlyByteStream) -> Instruction {
   //print!("${:04x} ", device.get_stream_position());
   let first_byte = device.read_next_byte();
   //println!("0x{:02x}", first_byte);
@@ -225,7 +224,7 @@ pub fn decode_instruction(device: &mut ReadOnlyByteStream) -> Instruction {
 }
 
 pub trait InstructionDecoder {
-  fn decode_instruction(from: &mut ReadOnlyByteStream);
+  fn decode_instruction(from: &mut impl ReadOnlyByteStream);
 }
 
 struct InstructionCache {

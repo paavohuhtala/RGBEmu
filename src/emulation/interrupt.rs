@@ -1,5 +1,5 @@
 
-use emulation::constants::*;
+use crate::emulation::constants::*;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Interrupt {

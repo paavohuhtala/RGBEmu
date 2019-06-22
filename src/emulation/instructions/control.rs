@@ -1,10 +1,6 @@
-
-use emulation::bitutils::*;
-
-use emulation::device::{Device};
-use emulation::registers::{StatusFlag};
-use emulation::instruction::{Operand8, ConditionCode};
-use emulation::instruction::Operand8::*;
+use crate::emulation::device::{Device};
+use crate::emulation::registers::{StatusFlag};
+use crate::emulation::instruction::{ConditionCode};
 
 fn check_condition(device: &Device, condition: ConditionCode) -> bool {
   match condition {

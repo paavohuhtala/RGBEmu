@@ -10,7 +10,7 @@ use std::time::{Duration, Instant};
 use std::io::prelude::*;
 use std::fs::File;
 
-// use std::thread::sleep;
+use std::thread::sleep;
 // use time::{precise_time_ns};
 
 use sdl2::EventPump;
@@ -42,7 +42,8 @@ fn get_input_state(event_pump: &EventPump) -> InputState {
   }
 }
 
-fn wait_keypress(stdin: &mut std::io::Read) -> std::io::Result<()> {
+#[allow(dead_code)]
+fn wait_keypress(stdin: &mut impl std::io::Read) -> std::io::Result<()> {
   stdin.read_exact(&mut [0u8; 2])
 }
 
@@ -117,13 +118,13 @@ fn main() {
           let time_spent = Instant::now().duration_since(last_frame);
           let expected_time = Duration::new(0, ((1f64 / GB_CYCLES_PER_SEC as f64) * total_cycles as f64 * 1e9) as u32);
 
-          // let sleep_time = if time_spent > expected_time { Duration::new(0, 0) } else { expected_time - time_spent };
+          let sleep_time = if time_spent > expected_time { Duration::new(0, 0) } else { expected_time - time_spent };
 
           last_frame = Instant::now();
           total_cycles = 0;
 
           // println!("FPS: {}", 1.0f64 / ((time_spent.subsec_nanos() as f64 + time_spent.as_secs() as f64 * 1e9) / 1e9));
-          // sleep(sleep_time);
+          sleep(sleep_time);
         }
       }
     }

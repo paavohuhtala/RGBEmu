@@ -1,6 +1,6 @@
 
-use emulation::interrupt::Interrupt;
-use emulation::internal_message::{InternalMessage};
+use crate::emulation::interrupt::Interrupt;
+use crate::emulation::internal_message::{InternalMessage};
 
 #[derive(Debug, Clone, Copy)]
 pub enum TimerRegister {

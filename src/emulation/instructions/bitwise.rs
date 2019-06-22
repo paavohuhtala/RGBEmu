@@ -1,10 +1,10 @@
 
-use emulation::bitutils::*;
+use crate::emulation::bitutils::*;
 
-use emulation::device::{Device};
-use emulation::registers::{StatusFlag};
-use emulation::instruction::{Operand8};
-use emulation::instruction::Operand8::*;
+use crate::emulation::device::{Device};
+use crate::emulation::registers::{StatusFlag};
+use crate::emulation::instruction::{Operand8};
+use crate::emulation::instruction::Operand8::*;
 
 use std::ops::*;
 

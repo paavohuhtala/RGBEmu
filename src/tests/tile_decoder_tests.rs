@@ -1,4 +1,3 @@
-
 use rendering::*;
 
 #[test]

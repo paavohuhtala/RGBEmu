@@ -1,17 +1,14 @@
-
-use emulation::constants::*;
-use emulation::cartridge::{Cartridge};
-use emulation::device::{DeviceType};
-
-use emulation::internal_message::{InternalMessage};
-use emulation::interrupt::{InterruptRegisters, Interrupt};
-use emulation::address_mapper::{AddressMapper};
-
-use emulation::input::InputRegister;
-use emulation::serial::SerialRegister;
-use emulation::timers::{TimerRegister, TimerRegisters};
-use emulation::audio::controller::{AudioController, AudioRamLocation};
-use emulation::video::controller::{VideoController, VideoMemoryLocation};
+use crate::emulation::constants::*;
+use crate::emulation::cartridge::{Cartridge};
+use crate::emulation::device::{DeviceType};
+use crate::emulation::internal_message::{InternalMessage};
+use crate::emulation::interrupt::{InterruptRegisters, Interrupt};
+use crate::emulation::address_mapper::{AddressMapper};
+use crate::emulation::input::InputRegister;
+use crate::emulation::serial::SerialRegister;
+use crate::emulation::timers::{TimerRegister, TimerRegisters};
+use crate::emulation::audio::controller::{AudioController, AudioRamLocation};
+use crate::emulation::video::controller::{VideoController, VideoMemoryLocation};
 
 #[derive(Debug)]
 pub enum MemoryLocation {
@@ -32,7 +29,7 @@ pub enum MemoryLocation {
   InterruptRequest
 }
 
-use emulation::bus::MemoryLocation::*;
+use crate::emulation::bus::MemoryLocation::*;
 
 pub struct Bus {
   pub cartridge: Option<Box<Cartridge>>,
@@ -96,25 +93,25 @@ impl AddressMapper for Bus {
   
   fn resolve_address(&self, address: u16) -> MemoryLocation {
     match address {
-      0 ... 255 if self.is_booting => Bootrom(address as u8),
-      ROM_BANK_0_START ... ROM_BANK_N_END |
-      0xA000           ... 0xBFFF         => Cartridge(address),
-      RAM_BANK_0_START ... RAM_BANK_0_END |
-      ECHO_RAM_START   ... ECHO_RAM_END   => RamBank0(address - RAM_BANK_0_START),
-      RAM_BANK_N_START ... RAM_BANK_N_END => RamBankN(address - RAM_BANK_N_START),
-      VRAM_START       ... VRAM_END       => Video(VideoMemoryLocation::Vram(address - VRAM_START)),
-      OAM_START        ... OAM_END        => Video(VideoMemoryLocation::Oam((address - 0xFE00) as u8)),
-      0xFEA0           ... 0xFEFF         => Ignored(address),
+      0 ..= 255 if self.is_booting => Bootrom(address as u8),
+      ROM_BANK_0_START ..= ROM_BANK_N_END |
+      0xA000           ..= 0xBFFF         => Cartridge(address),
+      RAM_BANK_0_START ..= RAM_BANK_0_END |
+      ECHO_RAM_START   ..= ECHO_RAM_END   => RamBank0(address - RAM_BANK_0_START),
+      RAM_BANK_N_START ..= RAM_BANK_N_END => RamBankN(address - RAM_BANK_N_START),
+      VRAM_START       ..= VRAM_END       => Video(VideoMemoryLocation::Vram(address - VRAM_START)),
+      OAM_START        ..= OAM_END        => Video(VideoMemoryLocation::Oam((address - 0xFE00) as u8)),
+      0xFEA0           ..= 0xFEFF         => Ignored(address),
       0xFF00                              => Joypad,
       0xFF01                              => Serial(SerialRegister::Data),
       0xFF02                              => Serial(SerialRegister::Control),
-      TIMER_IO_START   ... TIMER_IO_END   => Timer(self.timer.resolve_address(address)),
+      TIMER_IO_START   ..= TIMER_IO_END   => Timer(self.timer.resolve_address(address)),
       INTERRUPT_REQUEST                   => InterruptRequest,
-      AUDIO_IO_START   ... AUDIO_IO_END   => Audio(self.audio.resolve_address(address)),
-      VIDEO_IO_START   ... VIDEO_IO_END   => Video(self.video.resolve_address(address)),
+      AUDIO_IO_START   ..= AUDIO_IO_END   => Audio(self.audio.resolve_address(address)),
+      VIDEO_IO_START   ..= VIDEO_IO_END   => Video(self.video.resolve_address(address)),
       BOOTROM_UNMAP                       => BootromUnmap,
       0xFF7F                              => Ignored(address),
-      HIGH_RAM_START   ... HIGH_RAM_END   => HighRam((address - HIGH_RAM_START) as u8),
+      HIGH_RAM_START   ..= HIGH_RAM_END   => HighRam((address - HIGH_RAM_START) as u8),
       INTERRUPT_ENABLE                    => InterruptEnable,
       otherwise => Invalid(otherwise)
     }

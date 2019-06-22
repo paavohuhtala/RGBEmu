@@ -1,8 +1,8 @@
-use emulation::bitutils::*;
-use emulation::device::{Device, ReadWriteRegisters};
-use emulation::instruction::Operand8::*;
-use emulation::instruction::{Operand16, Operand8};
-use emulation::registers::StatusFlag;
+use crate::emulation::bitutils::*;
+use crate::emulation::device::{Device, ReadWriteRegisters};
+use crate::emulation::instruction::Operand8::*;
+use crate::emulation::instruction::{Operand16, Operand8};
+use crate::emulation::registers::StatusFlag;
 
 pub fn add_operand_8_to_a(device: &mut Device, operand: Operand8) -> u32 {
   let a = A.get(device);
@@ -164,8 +164,8 @@ pub fn decrement_operand_16(device: &mut Device, operand: Operand16) -> u32 {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use emulation::instruction::Operand8::*;
-  use emulation::registers::StatusFlag;
+  use crate::emulation::instruction::Operand8::*;
+  use crate::emulation::registers::StatusFlag;
   use test_util::get_device;
 
   #[test]
