@@ -23,10 +23,10 @@ pub const CARTRIDGE_RAM_START: u16 = 0xA000;
 pub const CARTRIDGE_RAM_END: u16 = 0xBFFF;
 
 pub const RAM_BANK_0_START: u16 = 0xC000;
-pub const RAM_BANK_0_END: u16 = RAM_BANK_0_START + RAM_BANK_SIZE as u16 - 1;
+pub const RAM_BANK_0_END: u16 = 0xCFFF;
 
 pub const RAM_BANK_N_START: u16 = 0xD000;
-pub const RAM_BANK_N_END: u16 = RAM_BANK_N_START + RAM_BANK_SIZE as u16 - 1;
+pub const RAM_BANK_N_END: u16 = 0xDFFF;
 
 pub const ECHO_RAM_START: u16 = 0xE000;
 pub const ECHO_RAM_END: u16 = 0xFDFF;

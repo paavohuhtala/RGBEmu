@@ -54,7 +54,8 @@ pub enum VideoMemoryLocation {
     WindowY,
     WindowX,
     DMATransferControl,
-    VramBank
+    VramBank,
+    Ignored(u16)
 }
 
 use crate::emulation::video::controller::VideoMemoryLocation::*;
@@ -138,7 +139,7 @@ impl VideoController {
             0xFF4A => WindowY,
             0xFF4B => WindowX,
             0xFF4F => VramBank,
-            _ => panic!("Invalid GPU address: ${:04x}", address)
+            _ => Ignored(address)
         }
     }
 
@@ -158,7 +159,14 @@ impl VideoController {
             WindowY => self.window_y,
             WindowX => self.window_x,
             DMATransferControl => 0,
-            VramBank => self.vram_bank
+            VramBank => self.vram_bank,
+            Ignored(address) => {
+                println!(
+                    "Tried to read from an invalid GPU address: ${:04x}",
+                    address
+                );
+                0
+            }
         }
     }
 
@@ -179,7 +187,13 @@ impl VideoController {
             WindowX => self.window_x = value,
             DMATransferControl => (),
             // TODO: handle special behavior here, or in the VRAM case?
-            VramBank => self.vram_bank = value
+            VramBank => self.vram_bank = value,
+            Ignored(address) => {
+                println!(
+                    "Tried to write to an invalid GPU address: ${:04x} <- {:02x}",
+                    address, value
+                );
+            }
         }
 
         match location {

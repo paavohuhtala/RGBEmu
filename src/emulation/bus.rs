@@ -32,9 +32,9 @@ pub enum MemoryLocation {
 use crate::emulation::bus::MemoryLocation::*;
 
 pub struct Bus {
-    pub cartridge: Option<Box<Cartridge>>,
+    pub cartridge: Option<Cartridge>,
     pub bootrom: Option<Vec<u8>>,
-    is_booting: bool,
+    pub is_booting: bool,
     pub ram: Vec<u8>,
     pub high_ram: Vec<u8>,
     selected_ram_bank: usize,
@@ -86,10 +86,6 @@ impl Bus {
             self.video.oam[i as usize] = self.read_8(self.resolve_address(address + i));
         }
     }
-
-    pub fn read_to_buffer_mut(&self, buffer: &mut [u8], address: u16, length: u16) {
-        self.read_to_buffer(buffer, address, length);
-    }
 }
 
 impl AddressMapper for Bus {
@@ -99,9 +95,8 @@ impl AddressMapper for Bus {
         match address {
             0..=255 if self.is_booting => Bootrom(address as u8),
             ROM_BANK_0_START..=ROM_BANK_N_END | 0xA000..=0xBFFF => Cartridge(address),
-            RAM_BANK_0_START..=RAM_BANK_0_END | ECHO_RAM_START..=ECHO_RAM_END => {
-                RamBank0(address - RAM_BANK_0_START)
-            }
+            RAM_BANK_0_START..=RAM_BANK_0_END => RamBank0(address - RAM_BANK_0_START),
+            ECHO_RAM_START..=ECHO_RAM_END => RamBank0(address - ECHO_RAM_START),
             RAM_BANK_N_START..=RAM_BANK_N_END => RamBankN(address - RAM_BANK_N_START),
             VRAM_START..=VRAM_END => Video(VideoMemoryLocation::Vram(address - VRAM_START)),
             OAM_START..=OAM_END => Video(VideoMemoryLocation::Oam((address - 0xFE00) as u8)),
@@ -152,7 +147,10 @@ impl AddressMapper for Bus {
             HighRam(offset) => self.high_ram[offset as usize],
             InterruptEnable => self.interrupt.get_enable(),
             Ignored(_) => 0,
-            Invalid(e) => panic!("Tried to read an invalid memory location: 0x{:X}", e)
+            Invalid(e) => {
+                println!("Tried to read an invalid memory location: 0x{:X}", e);
+                0
+            }
         }
     }
 
@@ -183,7 +181,7 @@ impl AddressMapper for Bus {
                     },
                     Joypad => self.input.write_8(value),
                     Serial(SerialRegister::Control) => {
-                        println!("Unknown serial control command: {}", value);
+                        // println!("Unknown serial control command: {}", value);
                     }
                     Timer(register) => self.timer.write_8(register, value),
                     InterruptRequest => self.interrupt.set_request(value),

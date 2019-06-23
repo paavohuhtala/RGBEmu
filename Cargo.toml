@@ -22,8 +22,8 @@ clippy = {version = "*", optional = true}
 git = "https://github.com/dzamlo/rust-bitfield"
 
 [dependencies.sdl2]
-version = "0.30"
-features = ["image"]
+version = "0.32.2"
+features = ["image", "unsafe_textures"]
 
 [features]
 default = []

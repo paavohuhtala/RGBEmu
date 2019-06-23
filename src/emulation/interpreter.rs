@@ -9,15 +9,29 @@ use crate::emulation::registers::StatusFlag;
 
 use crate::emulation::instructions::*;
 
-pub fn run_instruction(device: &mut Device) -> u32 {
-    /*println!("af = {:04X}", device.regs.af());
+#[allow(dead_code)]
+fn dump_memory(device: &Device) {
+    let mut buffer = vec![0; 0xFFFF];
+    device.bus.read_to_buffer(&mut buffer, 0, 0xFFFF);
+    use std::io::Write;
+    std::fs::File::create("dump.bin")
+        .unwrap()
+        .write_all(&buffer)
+        .unwrap();
+}
+
+#[allow(dead_code)]
+fn print_state(device: &Device) {
+    println!("af = {:04X}", device.regs.af());
     println!("bc = {:04X}", device.regs.bc());
     println!("de = {:04X}", device.regs.de());
     println!("hl = {:04X}", device.regs.hl());
     println!("sp = {:04X}", device.regs.sp);
     println!("pc = {:04X}", device.regs.pc);
+}
 
-    print!("${:04x} ", device.regs.pc);*/
+pub fn run_instruction(device: &mut Device) -> u32 {
+    // print!("${:04x} ", device.regs.pc);
     let instruction = decode_instruction(device);
     // println!("{:?}", instruction);
 
@@ -30,8 +44,6 @@ pub fn run_instruction(device: &mut Device) -> u32 {
         println!("{:?}", instruction);
         device.pause();
     }
-
-    //println!("{}", to_asm(&instruction));
 
     match instruction {
         Nop => 4,

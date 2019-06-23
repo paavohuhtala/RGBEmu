@@ -24,7 +24,7 @@ impl CartridgeMemory {
 }
 
 impl Cartridge {
-    pub fn from_bytes(buffer: &[u8]) -> Option<Box<Cartridge>> {
+    pub fn from_bytes(buffer: &[u8]) -> Option<Cartridge> {
         let mut header_bytes = vec![0u8; 0x14F];
         header_bytes.clone_from_slice(&buffer[..0x14F]);
 
@@ -42,7 +42,7 @@ impl Cartridge {
             mapper
         };
 
-        Some(Box::new(cartridge))
+        Some(cartridge)
     }
 
     pub fn read_8(&self, address: u16) -> u8 {

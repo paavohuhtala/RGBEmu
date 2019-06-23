@@ -1,31 +1,32 @@
 use crate::rendering::*;
 
 use sdl2;
-use sdl2::pixels::*;
+use sdl2::pixels::{Color, Palette, PixelFormatEnum};
 use sdl2::rect::Rect;
-use sdl2::render::{Canvas, Texture};
-use sdl2::surface::*;
+use sdl2::render::{Canvas, Texture, TextureCreator};
+use sdl2::surface::{Surface};
+use sdl2::video::{Window, WindowContext};
 
-pub struct SdlRendererContext<'a> {
-    pub canvas: sdl2::render::Canvas<sdl2::video::Window>,
-    pub texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>
+pub struct SdlRendererContext {
+    pub canvas: Canvas<Window>,
+    pub texture_creator: TextureCreator<WindowContext>
 }
 
-impl<'a> SdlRendererContext<'a> {
+impl SdlRendererContext {
     pub fn new(
-        canvas: sdl2::render::Canvas<sdl2::video::Window>,
-        texture_creator: &'a sdl2::render::TextureCreator<sdl2::video::WindowContext>
-    ) -> SdlRendererContext<'a> {
+        canvas: Canvas<Window>,
+        texture_creator: TextureCreator<WindowContext>
+    ) -> SdlRendererContext {
         SdlRendererContext {
             canvas,
-            texture_creator
+            texture_creator,
         }
     }
 }
 
-type SdlColor = sdl2::pixels::Color;
-type SdlPalette = sdl2::pixels::Palette;
-type SdlSurface<'a> = sdl2::surface::Surface<'a>;
+type SdlColor = Color;
+type SdlPalette = Palette;
+type SdlSurface<'a> = Surface<'a>;
 
 impl RendererColor for SdlColor {
     const TRANSPARENT: SdlColor = Color {
@@ -157,29 +158,23 @@ impl<'a> SdlRendererState<'a> {
 }
 
 pub struct SdlRenderer<'a> {
-    context: SdlRendererContext<'a>,
-    debug_context: SdlRendererContext<'a>,
+    context: SdlRendererContext,
+    debug_context: SdlRendererContext,
     pub state: SdlRendererState<'a>,
     screen_buffer_cpu: Surface<'a>,
-    screen_buffer_gpu: Texture<'a>,
+    screen_buffer_gpu: Texture,
     debug_buffer_cpu: Canvas<Surface<'a>>,
-    debug_buffer_gpu: Texture<'a>,
+    debug_buffer_gpu: Texture,
     debug_data: DebugData
 }
 
+#[derive(Default)]
 struct DebugData {
     pub scroll: (u8, u8),
     pub window: (u8, u8)
 }
 
 impl DebugData {
-    fn empty() -> Self {
-        DebugData {
-            window: (0, 0),
-            scroll: (0, 0)
-        }
-    }
-
     fn from_device(device: &Device) -> Self {
         DebugData {
             window: (device.bus.video.window_x, device.bus.video.window_y),
@@ -190,8 +185,8 @@ impl DebugData {
 
 impl<'a> SdlRenderer<'a> {
     pub fn new(
-        context: SdlRendererContext<'a>,
-        debug_context: SdlRendererContext<'a>
+        context: SdlRendererContext,
+        debug_context: SdlRendererContext
     ) -> SdlRenderer<'a> {
         let state = SdlRendererState::new();
         let screen_buffer_cpu = Surface::new(160, 144, PixelFormatEnum::RGB24).unwrap();
@@ -208,7 +203,8 @@ impl<'a> SdlRenderer<'a> {
             .texture_creator
             .create_texture_streaming(PixelFormatEnum::RGBA8888, 500, 500)
             .unwrap();
-        let debug_data = DebugData::empty();
+        let debug_data = DebugData::default();
+
         SdlRenderer {
             context,
             debug_context,

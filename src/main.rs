@@ -5,12 +5,12 @@ extern crate rgbemu;
 extern crate sdl2;
 extern crate time;
 
+use std::error::Error;
 use std::fs::File;
-use std::io::prelude::*;
+use std::io::Read;
 use std::time::{Duration, Instant};
 
 use std::thread::sleep;
-// use time::{precise_time_ns};
 
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -42,73 +42,97 @@ fn get_input_state(event_pump: &EventPump) -> InputState {
 }
 
 #[allow(dead_code)]
-fn wait_keypress(stdin: &mut impl std::io::Read) -> std::io::Result<()> {
+fn wait_keypress(stdin: &mut impl Read) -> std::io::Result<()> {
     stdin.read_exact(&mut [0u8; 2])
 }
 
-fn main() {
-    let context = sdl2::init().unwrap();
-    let video = context.video().unwrap();
-    let window = video
-        .window("RGBEmu", 160 * 4, 144 * 4)
-        .position_centered()
-        .build()
-        .unwrap();
-    let debug_window = video
-        .window("RGBEmu video debugger", 600, 600)
-        .build()
-        .unwrap();
-
-    let renderer_canvas = window.into_canvas().software().build().unwrap();
-    let texture_creator = renderer_canvas.texture_creator();
-    let renderer_context = SdlRendererContext::new(renderer_canvas, &texture_creator);
-
-    let debug_canvas = debug_window.into_canvas().software().build().unwrap();
-    let texture_creator = debug_canvas.texture_creator();
-    let debug_window_context = SdlRendererContext::new(debug_canvas, &texture_creator);
-    let mut sdl_renderer = SdlRenderer::new(renderer_context, debug_window_context);
-
+fn load_bootrom() -> Vec<u8> {
     let mut rom_buffer: Vec<u8> = Vec::new();
     File::open("DMG_ROM.bin")
         .unwrap()
         .read_to_end(&mut rom_buffer)
         .unwrap();
+    rom_buffer
+}
 
+fn load_game(path: &str) -> Cartridge {
     let mut cartridge_data: Vec<u8> = Vec::new();
-    // File::open("./cpu_instrs/individual/06-ld r,r.gb").unwrap().read_to_end(&mut cartridge_data).unwrap();
-    File::open("./test_roms/Tetris (World).gb")
+    File::open(path)
         .unwrap()
         .read_to_end(&mut cartridge_data)
         .unwrap();
 
-    let mut device = Device::new_gb(Some(rom_buffer));
-    // let mut device = Device::new_gb(None);
     let cartridge = Cartridge::from_bytes(&cartridge_data).unwrap();
-    println!("{:?}", cartridge.header);
+    cartridge
+}
 
+#[derive(Copy, Clone, PartialEq, Eq)]
+enum UseBootromSetting {
+    UseBootrom,
+    EmulateBootrom
+}
+
+fn create_device(use_bootrom: UseBootromSetting) -> Device {
+    let bootrom = if use_bootrom == UseBootromSetting::UseBootrom {
+        Some(load_bootrom())
+    } else {
+        None
+    };
+
+    Device::new_gb(bootrom)
+}
+
+fn create_renderer(context: &mut sdl2::Sdl) -> Result<SdlRenderer, Box<dyn Error>> {
+    let video = context.video()?;
+    let window = video
+        .window("RGBEmu", 160 * 4, 144 * 4)
+        .position_centered()
+        .build()?;
+    let debug_window = video.window("RGBEmu video debugger", 600, 600).build()?;
+
+    let renderer_canvas = window.into_canvas().software().build()?;
+    let texture_creator = renderer_canvas.texture_creator();
+    let renderer_context = SdlRendererContext::new(renderer_canvas, texture_creator);
+
+    let debug_canvas = debug_window.into_canvas().software().build()?;
+    let texture_creator = debug_canvas.texture_creator();
+    let debug_window_context = SdlRendererContext::new(debug_canvas, texture_creator);
+
+    Ok(SdlRenderer::new(renderer_context, debug_window_context))
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let mut context = sdl2::init()?;
+    let mut event_pump = context.event_pump()?;
+    let mut renderer = create_renderer(&mut context)?;
+
+    let cartridge = load_game("./test_roms/Tetris (World).gb");
+    let mut device = create_device(UseBootromSetting::EmulateBootrom);
     device.bus.cartridge = Some(cartridge);
-
-    let mut event_pump = context.event_pump().unwrap();
 
     let mut total_cycles = 0u32;
     let mut last_frame = Instant::now();
 
-    // let mut stdin = std::io::stdin();
+    let mut stdin = std::io::stdin();
+    let is_stepping = false;
 
     'main_loop: loop {
         total_cycles += device.run_tick();
-        // stdin.read_exact(&mut dummy_buffer).unwrap();
+
+        if is_stepping {
+            wait_keypress(&mut stdin)?;
+        }
 
         while let Some(msg) = device.next_renderer_message() {
             match msg {
                 PrepareNextFrame => {
-                    sdl_renderer.prepare_frame(&device);
+                    renderer.prepare_frame(&device);
                 }
                 RenderScanline(n) => {
-                    sdl_renderer.draw_scanline(&device, n);
+                    renderer.draw_scanline(&device, n);
                 }
                 PresentFrame => {
-                    sdl_renderer.present();
+                    renderer.present();
 
                     //last_update = precise_time_ns() as f64 / 10e9;
                     //let spent = last_update - last_frame;
@@ -152,4 +176,6 @@ fn main() {
             }
         }
     }
+
+    Ok(())
 }
