@@ -1,6 +1,6 @@
 use crate::emulation::constants::*;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Interrupt {
     LCDVBlank,
     LCDController,
