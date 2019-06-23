@@ -3,7 +3,7 @@ use rgbemu::emulation::cartridge::{Cartridge, CartridgeHeader, CartridgeMemory, 
 use rgbemu::emulation::device::{Device, DeviceType, ExecutionState};
 use rgbemu::emulation::mappers::Mapper;
 
-fn create_test_cartridge(rom: &[u8]) -> Box<Cartridge> {
+fn create_test_cartridge(rom: &[u8]) -> Cartridge {
     let mut memory = CartridgeMemory::new(16384, 0);
     memory.rom[0x100..0x100 + rom.len()].copy_from_slice(rom);
 
@@ -17,17 +17,16 @@ fn create_test_cartridge(rom: &[u8]) -> Box<Cartridge> {
         is_japanese: false
     };
 
-    Box::new(Cartridge {
+    Cartridge {
         memory,
         mapper,
         header
-    })
+    }
 }
 
 pub fn run_program(code: &[u8]) -> Device {
     let mut device = Device::new(DeviceType::GameBoy, None);
     let cartridge = create_test_cartridge(code);
-
     device.bus.cartridge = Some(cartridge);
 
     while device.execution_state != ExecutionState::Halted {
