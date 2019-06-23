@@ -213,14 +213,13 @@ pub fn decode_instruction(device: &mut impl ReadOnlyByteStream) -> Instruction {
                         RotateRightCarry(register)
                     }
                 }
-                (0, 0, 1, logical, 0, d2, d1, d0) => {
+                (0, 0, 1, 1, 0, d2, d1, d0) => {
                     let register = to_operand(d2, d1, d0);
-                    if logical == 1 {
-                        // Technically an undocumented instruction
-                        ShiftLeftLogical(register)
-                    } else {
-                        ShiftLeftArithmetic(register)
-                    }
+                    SwapNibbles(register)
+                }
+                (0, 0, 1, 0, 0, d2, d1, d0) => {
+                    let register = to_operand(d2, d1, d0);
+                    ShiftLeftArithmetic(register)
                 }
                 (0, 0, 1, logical, 1, d2, d1, d0) => {
                     let register = to_operand(d2, d1, d0);

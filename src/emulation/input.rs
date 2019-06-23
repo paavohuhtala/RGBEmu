@@ -1,59 +1,41 @@
-bitflags! {
-  pub struct JoypadRegister: u8 {
-    const RightOrA    = 0b0000_0001;
-    const LeftOrB     = 0b0000_0010;
-    const UpOrSelect  = 0b0000_0100;
-    const DownOrStart = 0b0000_1000;
-    const UseSet1     = 0b0001_0000;
-    const UseSet2     = 0b0010_0000;
-    const Unused      = 0b1100_0000;
-  }
-}
+use crate::emulation::bitutils::{BitExtensions};
 
-#[derive(Debug, Clone, Copy)]
+const RIGHT_OR_A_BIT: u8 = 0;
+const LEFT_OR_B_BIT: u8 = 1;
+const UP_OR_SELECT_BIT: u8 = 2;
+const DOWN_OR_START_BIT: u8 = 3;
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 enum ButtonSet {
     None,
     Arrows,
     Actions
 }
 
-impl JoypadRegister {
-    fn from_input_state(state: InputState, selected_set: ButtonSet) -> JoypadRegister {
-        let mut base = JoypadRegister::from_bits(0b1100_1111).unwrap();
-        match selected_set {
-            ButtonSet::Arrows => {
-                if state.up {
-                    base.remove(JoypadRegister::UpOrSelect);
-                }
-                if state.down {
-                    base.remove(JoypadRegister::DownOrStart);
-                }
-                if state.left {
-                    base.remove(JoypadRegister::LeftOrB);
-                }
-                if state.right {
-                    base.remove(JoypadRegister::RightOrA);
-                }
-            }
-            ButtonSet::Actions => {
-                if state.a {
-                    base.remove(JoypadRegister::RightOrA);
-                }
-                if state.b {
-                    base.remove(JoypadRegister::LeftOrB);
-                }
-                if state.select {
-                    base.remove(JoypadRegister::UpOrSelect);
-                }
-                if state.start {
-                    base.remove(JoypadRegister::DownOrStart);
-                }
-            }
-            ButtonSet::None => ()
-        }
+fn encode_joypad_state(state: InputState, selected_set: ButtonSet) -> u8 {
+    let mut value = match selected_set {
+        ButtonSet::None => 0b1111_1111,
+        ButtonSet::Arrows => 0b1110_1111,
+        ButtonSet::Actions => 0b1101_1111
+    };
 
-        base
+    if (state.right && selected_set == ButtonSet::Arrows) || (state.a && selected_set == ButtonSet::Actions) {
+        value = value.clear_bit(RIGHT_OR_A_BIT);
     }
+
+    if (state.left && selected_set == ButtonSet::Arrows) || (state.b && selected_set == ButtonSet::Actions) {
+        value = value.clear_bit(LEFT_OR_B_BIT);
+    }
+
+    if (state.up && selected_set == ButtonSet::Arrows) || (state.select && selected_set == ButtonSet::Actions) {
+        value = value.clear_bit(UP_OR_SELECT_BIT);
+    }
+
+    if (state.down && selected_set == ButtonSet::Arrows) || (state.start && selected_set == ButtonSet::Actions) {
+        value = value.clear_bit(DOWN_OR_START_BIT);
+    }
+
+    value
 }
 
 pub struct InputRegister {
@@ -70,15 +52,16 @@ impl InputRegister {
     }
 
     pub fn write_8(&mut self, value: u8) {
-        match value {
-            _ if value & 0b01_0000 == 0 => self.selected_set = ButtonSet::Arrows,
-            _ if value & 0b10_0000 == 0 => self.selected_set = ButtonSet::Actions,
-            _ => return
-        }
+        let masked = value & 0b0011_0000;
+        self.selected_set = match masked {
+            0b0010_0000 => ButtonSet::Arrows,
+            0b0001_0000 => ButtonSet::Actions,
+            _ => ButtonSet::None
+        };
     }
 
     pub fn read_8(&self) -> u8 {
-        JoypadRegister::from_input_state(self.input_state, self.selected_set).bits()
+        encode_joypad_state(self.input_state, self.selected_set)
     }
 
     pub fn update(&mut self, new_state: InputState) {

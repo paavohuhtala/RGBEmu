@@ -161,6 +161,7 @@ pub enum Instruction {
     TestBit(u8, Operand8),
     SetBit(u8, Operand8),
     ClearBit(u8, Operand8),
+    SwapNibbles(Operand8),
     AddSignedImmediateToSP(i8),
     Stop
 }

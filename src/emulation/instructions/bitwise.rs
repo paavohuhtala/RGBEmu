@@ -289,3 +289,22 @@ pub fn set_bit(device: &mut Device, operand: Operand8, bit_index: u8) -> u32 {
         8
     }
 }
+
+pub fn swap_nibbles(device: &mut Device, operand: Operand8) -> u32 {
+    let op = operand.get(device);
+    let upper = op & 0b1111_0000;
+    let lower = op & 0b0000_1111;
+    let swapped = lower << 4 | upper >> 4;
+
+    operand.set(device, swapped);
+    device.regs.set_flag_to(StatusFlag::Z, swapped == 0);
+    device.regs.clear_flag(StatusFlag::N);
+    device.regs.clear_flag(StatusFlag::H);
+    device.regs.clear_flag(StatusFlag::C);
+
+    if operand.is_memref() {
+        16
+    } else {
+        8
+    }
+}

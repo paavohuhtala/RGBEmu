@@ -199,6 +199,7 @@ pub fn run_instruction(device: &mut Device) -> u32 {
         TestBit(n, operand) => test_bit(device, operand, n),
         ClearBit(n, operand) => clear_bit(device, operand, n),
         SetBit(n, operand) => set_bit(device, operand, n),
+        SwapNibbles(operand) => swap_nibbles(device, operand),
 
         //
         // Control
