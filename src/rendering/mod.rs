@@ -41,7 +41,7 @@ where
     Self: Sized
 {
     fn from_colors(colors: [Color; 4]) -> Self;
-    fn from_gb_palette(palette: &GbPalette, is_sprite: bool) -> Self {
+    fn from_gb_palette(palette: GbPalette, is_sprite: bool) -> Self {
         let color0 = if is_sprite {
             Color::TRANSPARENT
         } else {

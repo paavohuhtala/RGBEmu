@@ -244,9 +244,3 @@ pub fn decode_instruction(device: &mut impl ReadOnlyByteStream) -> Instruction {
         _ => Unknown(first_byte as u16)
     }
 }
-
-pub trait InstructionDecoder {
-    fn decode_instruction(from: &mut impl ReadOnlyByteStream);
-}
-
-struct InstructionCache {}

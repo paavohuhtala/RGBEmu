@@ -90,7 +90,7 @@ impl Device {
             interrupts_enabled: true,
             debug_state: DebugState::Default,
             breakpoints: HashSet::new(),
-            renderer_messages: Vec::with_capacity(128)
+            renderer_messages: Vec::with_capacity(16)
         };
 
         if device.bus.bootrom.is_none() {

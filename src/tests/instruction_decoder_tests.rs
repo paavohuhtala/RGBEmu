@@ -156,3 +156,23 @@ pub fn removed_instructions_should_be_unknown_or_panic() {
         }
     }
 }
+
+#[test]
+pub fn bitwise_swap() {
+    verify_instruction(SwapNibbles(Operand8::A), &[0xCB, 0x37]);
+    verify_instruction(SwapNibbles(Operand8::B), &[0xCB, 0x30]);
+    verify_instruction(SwapNibbles(Operand8::C), &[0xCB, 0x31]);
+    verify_instruction(SwapNibbles(Operand8::D), &[0xCB, 0x32]);
+    verify_instruction(SwapNibbles(Operand8::E), &[0xCB, 0x33]);
+    verify_instruction(SwapNibbles(Operand8::H), &[0xCB, 0x34]);
+    verify_instruction(SwapNibbles(Operand8::L), &[0xCB, 0x35]);
+    verify_instruction(SwapNibbles(Operand8::MemoryReference), &[0xCB, 0x36]);
+}
+
+#[test]
+pub fn bitwise_complement() {
+    // CPL
+    verify_instruction(ComplementA, &[0x2F]);
+    // CCF
+    verify_instruction(ComplementCarry, &[0x3F]);
+}

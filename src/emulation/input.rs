@@ -1,4 +1,4 @@
-use crate::emulation::bitutils::{BitExtensions};
+use crate::emulation::bitutils::BitExtensions;
 
 const RIGHT_OR_A_BIT: u8 = 0;
 const LEFT_OR_B_BIT: u8 = 1;
@@ -19,19 +19,27 @@ fn encode_joypad_state(state: InputState, selected_set: ButtonSet) -> u8 {
         ButtonSet::Actions => 0b1101_1111
     };
 
-    if (state.right && selected_set == ButtonSet::Arrows) || (state.a && selected_set == ButtonSet::Actions) {
+    if (state.right && selected_set == ButtonSet::Arrows)
+        || (state.a && selected_set == ButtonSet::Actions)
+    {
         value = value.clear_bit(RIGHT_OR_A_BIT);
     }
 
-    if (state.left && selected_set == ButtonSet::Arrows) || (state.b && selected_set == ButtonSet::Actions) {
+    if (state.left && selected_set == ButtonSet::Arrows)
+        || (state.b && selected_set == ButtonSet::Actions)
+    {
         value = value.clear_bit(LEFT_OR_B_BIT);
     }
 
-    if (state.up && selected_set == ButtonSet::Arrows) || (state.select && selected_set == ButtonSet::Actions) {
+    if (state.up && selected_set == ButtonSet::Arrows)
+        || (state.select && selected_set == ButtonSet::Actions)
+    {
         value = value.clear_bit(UP_OR_SELECT_BIT);
     }
 
-    if (state.down && selected_set == ButtonSet::Arrows) || (state.start && selected_set == ButtonSet::Actions) {
+    if (state.down && selected_set == ButtonSet::Arrows)
+        || (state.start && selected_set == ButtonSet::Actions)
+    {
         value = value.clear_bit(DOWN_OR_START_BIT);
     }
 

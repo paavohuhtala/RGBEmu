@@ -142,8 +142,6 @@ impl CartridgeHeader {
         let ram_size_id = bytes[0x149];
         let cartridge_type = CartridgeType::new(cartridge_type_id, rom_size_id, ram_size_id);
 
-        println!("{:?}", cartridge_type);
-
         CartridgeHeader {
             //logo: LogoWrapper(logo),
             title: title,

@@ -21,7 +21,7 @@ use rgbemu::rendering::sdl_renderer::*;
 use rgbemu::rendering::*;
 
 use rgbemu::emulation::cartridge::Cartridge;
-use rgbemu::emulation::constants::GB_CYCLES_PER_SEC;
+use rgbemu::emulation::constants::{GB_CYCLES_PER_SEC, SCREEN_HEIGHT, SCREEN_WIDTH};
 use rgbemu::emulation::device::Device;
 use rgbemu::emulation::input::InputState;
 use rgbemu::emulation::internal_message::RendererMessage::*;
@@ -85,7 +85,7 @@ fn create_device(use_bootrom: UseBootromSetting) -> Device {
 fn create_renderer(context: &mut sdl2::Sdl) -> Result<SdlRenderer, Box<dyn Error>> {
     let video = context.video()?;
     let window = video
-        .window("RGBEmu", 160 * 4, 144 * 4)
+        .window("RGBEmu", SCREEN_WIDTH * 4, SCREEN_HEIGHT * 4)
         .position_centered()
         .build()?;
     let debug_window = video.window("RGBEmu video debugger", 600, 600).build()?;
@@ -107,6 +107,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut renderer = create_renderer(&mut context)?;
 
     let cartridge = load_game("./test_roms/Tetris (World).gb");
+    // let cartridge = load_game("./test_roms/pong.gb");
+    // let cartridge = load_game("./cpu_instrs/individual/09-op r,r.gb");
     let mut device = create_device(UseBootromSetting::EmulateBootrom);
     device.bus.cartridge = Some(cartridge);
 
@@ -171,7 +173,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     total_cycles = 0;
 
                     // println!("FPS: {}", 1.0f64 / ((time_spent.subsec_nanos() as f64 + time_spent.as_secs() as f64 * 1e9) / 1e9));
-                    sleep(sleep_time);
+                    // sleep(sleep_time);
                 }
             }
         }

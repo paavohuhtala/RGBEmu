@@ -1,10 +1,11 @@
+use crate::emulation::constants::{SCREEN_HEIGHT, SCREEN_WIDTH, TILE_SIZE};
 use crate::rendering::*;
 
 use sdl2;
 use sdl2::pixels::{Color, Palette, PixelFormatEnum};
 use sdl2::rect::Rect;
 use sdl2::render::{Canvas, Texture, TextureCreator};
-use sdl2::surface::{Surface};
+use sdl2::surface::Surface;
 use sdl2::video::{Window, WindowContext};
 
 pub struct SdlRendererContext {
@@ -19,7 +20,7 @@ impl SdlRendererContext {
     ) -> SdlRendererContext {
         SdlRendererContext {
             canvas,
-            texture_creator,
+            texture_creator
         }
     }
 }
@@ -55,37 +56,40 @@ impl RendererPalette<SdlColor> for SdlPalette {
 pub struct SdlRendererState<'a> {
     pub background_buffer: SdlSurface<'a>,
     pub window_buffer: SdlSurface<'a>,
-    pub background_palette: SdlPalette,
-    pub tile_cache: SdlSurface<'a>,
+    pub background_palette: GbPalette,
+    pub sprite_palette_0: GbPalette,
+    pub sprite_palette_1: GbPalette,
+    pub tile_cache: Box<[[u8; TILE_SIZE * TILE_SIZE]; 16 * 16]>,
     pub sprites: [SpriteAttributes; 40],
     pub tile_patterns: [TileData; 256],
     pub background_tiles: [u8; 32 * 32],
-    pub window_tiles: [u8; 32 * 32],
-    temp_tile_buffer: SdlSurface<'a>
+    pub window_tiles: [u8; 32 * 32]
 }
 
 impl<'a> SdlRendererState<'a> {
     pub fn new() -> SdlRendererState<'a> {
         let background_buffer = Surface::new(256, 256, PixelFormatEnum::RGB24).unwrap();
         let window_buffer = Surface::new(256, 256, PixelFormatEnum::RGB24).unwrap();
-        let background_palette = Palette::from_colors([Color::RGB(255, 0, 255); 4]);
-        let tile_cache = Surface::new(16 * 8, 16 * 8, PixelFormatEnum::RGB24).unwrap();
+        let background_palette = GbPalette(0x00);
+        let sprite_palette_0 = GbPalette(0x00);
+        let sprite_palette_1 = GbPalette(0x00);
+        let tile_cache = Box::new([[0; TILE_SIZE * TILE_SIZE]; 16 * 16]);
         let sprites = [SpriteAttributes::default(); 40];
         let tile_patterns = [TileData::default(); 256];
         let background_tiles = [0u8; 32 * 32];
         let window_tiles = [0u8; 32 * 32];
-        let temp_tile_buffer = Surface::new(8, 8, PixelFormatEnum::Index8).unwrap();
 
         SdlRendererState {
             background_buffer,
             window_buffer,
             background_palette,
+            sprite_palette_0,
+            sprite_palette_1,
             tile_cache,
             sprites,
             tile_patterns,
             background_tiles,
-            window_tiles,
-            temp_tile_buffer
+            window_tiles
         }
     }
 
@@ -116,31 +120,18 @@ impl<'a> SdlRendererState<'a> {
         CommonRenderer::read_sprites(&device.bus, &mut self.sprites);
     }
 
-    fn refresh_palette(&mut self, device: &Device) {
-        let palette = device.bus.video.background_palette;
-        let sdl_palette = Palette::from_gb_palette(&palette, false);
-        self.temp_tile_buffer.set_palette(&sdl_palette).unwrap();
+    fn refresh_palettes(&mut self, device: &Device) {
+        self.background_palette = device.bus.video.background_palette;
+        self.sprite_palette_0 = device.bus.video.sprite_palette_0;
+        self.sprite_palette_1 = device.bus.video.sprite_palette_1;
     }
 
     fn refresh_tile_cache(&mut self) {
-        self.temp_tile_buffer
-            .fill_rect(None, Color::RGB(0, 0, 0))
-            .unwrap();
         for y in 0..16 {
             for x in 0..16 {
                 let tile = self.tile_patterns[y * 16 + x];
-
-                self.temp_tile_buffer.with_lock_mut(|tile_buffer| -> () {
-                    tile.unpack_to(tile_buffer);
-                });
-
-                self.temp_tile_buffer
-                    .blit(
-                        None,
-                        self.tile_cache.as_mut(),
-                        Some(Rect::new((x * 8) as i32, (y * 8) as i32, 8, 8))
-                    )
-                    .unwrap();
+                let offset = (y * 16) + x;
+                tile.unpack_to(&mut self.tile_cache[offset]);
             }
         }
     }
@@ -153,7 +144,7 @@ impl<'a> SdlRendererState<'a> {
     }
 
     pub fn refresh_scanline(&mut self, device: &Device) {
-        self.refresh_palette(device);
+        self.refresh_palettes(device);
     }
 }
 
@@ -184,15 +175,13 @@ impl DebugData {
 }
 
 impl<'a> SdlRenderer<'a> {
-    pub fn new(
-        context: SdlRendererContext,
-        debug_context: SdlRendererContext
-    ) -> SdlRenderer<'a> {
+    pub fn new(context: SdlRendererContext, debug_context: SdlRendererContext) -> SdlRenderer<'a> {
         let state = SdlRendererState::new();
-        let screen_buffer_cpu = Surface::new(160, 144, PixelFormatEnum::RGB24).unwrap();
+        let screen_buffer_cpu =
+            Surface::new(SCREEN_WIDTH, SCREEN_HEIGHT, PixelFormatEnum::RGB24).unwrap();
         let screen_buffer_gpu = context
             .texture_creator
-            .create_texture_streaming(PixelFormatEnum::RGB24, 160, 144)
+            .create_texture_streaming(PixelFormatEnum::RGB24, SCREEN_WIDTH, SCREEN_HEIGHT)
             .unwrap();
 
         let debug_buffer_cpu = Surface::new(500, 500, PixelFormatEnum::RGBA8888)
@@ -216,54 +205,10 @@ impl<'a> SdlRenderer<'a> {
             debug_data
         }
     }
-
-    fn draw_background_buffer(&mut self) {
-        for y in 0..32 {
-            for x in 0..32 {
-                let tile = self.state.get_background_tile(x, y);
-                let row = (tile / 16) as i32;
-                let column = (tile % 16) as i32;
-                let cache_rect = Rect::new(column * 8, row * 8, 8, 8);
-                let target_rect = Rect::new((x as i32) * 8, (y as i32) * 8, 8, 8);
-                self.state
-                    .tile_cache
-                    .blit(
-                        Some(cache_rect),
-                        self.state.background_buffer.as_mut(),
-                        Some(target_rect)
-                    )
-                    .unwrap();
-            }
-        }
-    }
-
-    fn draw_window_buffer(&mut self) {
-        for y in 0..32 {
-            for x in 0..32 {
-                let tile = self.state.get_window_tile(x, y);
-                let row = (tile / 16) as i32;
-                let column = (tile % 16) as i32;
-                let cache_rect = Rect::new(column * 8, row * 8, 8, 8);
-                let target_rect = Rect::new((x as i32) * 8, (y as i32) * 8, 8, 8);
-                self.state
-                    .tile_cache
-                    .blit(
-                        Some(cache_rect),
-                        self.state.window_buffer.as_mut(),
-                        Some(target_rect)
-                    )
-                    .unwrap();
-            }
-        }
-    }
 }
 
 impl<'a> Renderer for SdlRenderer<'a> {
     fn present(&mut self) {
-        self.state
-            .tile_cache
-            .blit(None, self.debug_buffer_cpu.surface_mut(), None)
-            .unwrap();
         self.state
             .background_buffer
             .blit(
@@ -272,14 +217,16 @@ impl<'a> Renderer for SdlRenderer<'a> {
                 Rect::new(0, 140, 256, 256)
             )
             .unwrap();
+
         self.debug_buffer_cpu
             .set_draw_color(Color::RGB(255, 255, 255));
+
         self.debug_buffer_cpu
             .draw_rect(Rect::new(
                 self.debug_data.scroll.0 as i32,
                 self.debug_data.scroll.1 as i32 + 140,
-                160,
-                144
+                SCREEN_WIDTH,
+                SCREEN_HEIGHT
             ))
             .unwrap();
 
@@ -299,9 +246,7 @@ impl<'a> Renderer for SdlRenderer<'a> {
             })
             .unwrap();
 
-        self.context
-            .canvas
-            .set_draw_color(Color::RGB(255, 255, 255));
+        self.context.canvas.set_draw_color(Color::RGB(0, 0, 0));
         self.context.canvas.clear();
         self.context
             .canvas
@@ -327,53 +272,87 @@ impl<'a> Renderer for SdlRenderer<'a> {
         let window_x = device.bus.video.window_x as i32;
         let window_y = device.bus.video.window_y as i32;
 
-        let scanline_rect = Rect::new(scroll_x, scanline as i32 + scroll_y, 256, 1);
-        self.state
-            .background_buffer
-            .blit(
-                scanline_rect,
-                self.screen_buffer_cpu.as_mut(),
-                Rect::new(0, scanline as i32, 160, 1)
-            )
-            .unwrap();
+        let bg_enabled = device.bus.video.is_bg_enabled();
+        let sprites_enabled = device.bus.video.are_sprites_enabled();
 
-        if window_y >= scanline && window_y < scanline + 256 {
-            let window_line_rect = Rect::new(0, scanline - window_y as i32, 256, 256);
-            self.state
-                .window_buffer
-                .blit(
-                    window_line_rect,
-                    self.screen_buffer_cpu.as_mut(),
-                    Rect::new(window_x, window_y, 256, 256)
-                )
-                .unwrap();
+        let base_offset = (SCREEN_WIDTH * 3) as usize * scanline as usize;
+        let pixels = self.screen_buffer_cpu.as_mut().without_lock_mut().unwrap();
+
+        let scanline = scanline as usize;
+
+        for x in 0..SCREEN_WIDTH as usize {
+            if bg_enabled {
+                let tile_x = ((x + scroll_x as usize) / TILE_SIZE) as u8;
+                let tile_y = ((scanline + scroll_y as usize) / TILE_SIZE) as u8;
+
+                let start_of_tile_x = (tile_x as usize) * TILE_SIZE;
+                let start_of_tile_y = (tile_y as usize) * TILE_SIZE;
+
+                let tile_rel_x = x - start_of_tile_x;
+                let tile_rel_y = scanline - start_of_tile_y;
+
+                let tile_index = self.state.get_background_tile(tile_x, tile_y);
+                let tile_data = &self.state.tile_cache[tile_index as usize];
+
+                let tile_pixel_data = tile_data[tile_rel_y * TILE_SIZE + tile_rel_x];
+                let (r, g, b, _) = device
+                    .bus
+                    .video
+                    .background_palette
+                    .get_color(tile_pixel_data, false);
+
+                let screen_offset = base_offset + x * 3;
+                pixels[screen_offset + 0] = r;
+                pixels[screen_offset + 1] = g;
+                pixels[screen_offset + 2] = b;
+            }
         }
 
-        for sprite in self.state.sprites.iter() {
-            if sprite.x == 0 {
-                continue;
-            }
+        // TODO: Render window
 
-            let sprite_width = 8;
-            let x = sprite.x as i32 - sprite_width;
-            let y = sprite.y as i32 - 16;
-            let height = device.bus.video.get_sprite_height() as i32;
+        if sprites_enabled {
+            let width = TILE_SIZE as usize;
+            let height = device.bus.video.get_sprite_height() as usize;
 
-            if scanline >= y && scanline < y + height {
-                let tile_rect = self.state.get_tile_rect(sprite.pattern);
-                let displayed_line = scanline - y;
-                let source_rect = Rect::new(
-                    tile_rect.x(),
-                    tile_rect.y() + displayed_line,
-                    sprite_width as u32,
-                    1
-                );
-                let target_rect = Rect::new(x, scanline as i32, sprite_width as u32, 1);
+            let mut rendered_sprites = 0;
 
-                self.state
-                    .tile_cache
-                    .blit(source_rect, self.screen_buffer_cpu.as_mut(), target_rect)
-                    .unwrap();
+            for sprite in self.state.sprites.iter() {
+                if sprite.x == 0 {
+                    continue;
+                }
+
+                let sprite_y = sprite.y as usize - 16;
+
+                if scanline >= sprite_y && scanline < sprite_y + height {
+                    rendered_sprites += 1;
+
+                    let sprite_x = sprite.x as usize - width;
+                    let sprite_rel_y = scanline - sprite_y;
+
+                    let tile_data = &self.state.tile_cache[sprite.pattern as usize];
+
+                    let palette = if sprite.flags & 0b0001_0000 != 0 {
+                        self.state.sprite_palette_0
+                    } else {
+                        self.state.sprite_palette_1
+                    };
+
+                    for x in 0..TILE_SIZE {
+                        let tile_pixel_data = tile_data[sprite_rel_y * TILE_SIZE + x];
+
+                        let (r, g, b, should_render) = palette.get_color(tile_pixel_data, true);
+
+                        if !should_render {
+                            continue;
+                        }
+
+                        let screen_offset = base_offset + (sprite_x + x) * 3;
+
+                        pixels[screen_offset + 0] = r;
+                        pixels[screen_offset + 1] = g;
+                        pixels[screen_offset + 2] = b;
+                    }
+                }
             }
         }
     }
@@ -384,26 +363,16 @@ impl<'a> Renderer for SdlRenderer<'a> {
 
         self.state
             .background_buffer
-            .fill_rect(None, Color::RGB(255, 255, 255))
+            .fill_rect(None, Color::RGB(0, 0, 0))
             .unwrap();
+
         self.screen_buffer_cpu
-            .fill_rect(None, Color::RGB(255, 255, 255))
+            .fill_rect(None, Color::RGB(0, 0, 0))
             .unwrap();
-        self.state
-            .background_buffer
-            .fill_rect(None, Color::RGB(255, 255, 255))
-            .unwrap();
+
         self.state
             .window_buffer
-            .fill_rect(None, Color::RGBA(255, 255, 255, 0))
+            .fill_rect(None, Color::RGBA(0, 0, 0, 0))
             .unwrap();
-
-        if device.bus.video.is_bg_enabled() {
-            self.draw_background_buffer();
-        }
-
-        if device.bus.video.is_window_enabled() {
-            self.draw_window_buffer();
-        }
     }
 }

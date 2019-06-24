@@ -1,8 +1,5 @@
 #![allow(dead_code)]
 #![allow(non_upper_case_globals)]
-#![feature(trace_macros)]
-#![feature(log_syntax)]
-#![feature(box_syntax)]
 
 #[macro_use]
 extern crate bitflags;

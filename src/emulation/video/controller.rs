@@ -1,6 +1,16 @@
+use crate::emulation::constants::{
+    DARKEST_GREEN, DARK_GREEN, LIGHTEST_GREEN, LIGHT_GREEN, SCREEN_HEIGHT
+};
 use crate::emulation::device::DeviceType;
 use crate::emulation::internal_message::{InternalMessage, RendererMessage};
 use crate::emulation::interrupt::Interrupt;
+
+const DEFAULT_COLORS: [(u8, u8, u8, bool); 4] = [
+    (LIGHTEST_GREEN.0, LIGHTEST_GREEN.1, LIGHTEST_GREEN.2, true),
+    (LIGHT_GREEN.0, LIGHT_GREEN.1, LIGHT_GREEN.2, true),
+    (DARK_GREEN.0, DARK_GREEN.1, DARK_GREEN.2, true),
+    (DARKEST_GREEN.0, DARKEST_GREEN.1, DARKEST_GREEN.2, true)
+];
 
 bitflags! {
   #[derive(Default)]
@@ -36,6 +46,19 @@ bitfield! {
   pub get_color_2, _: 5,4;
   pub get_color_1, _: 3,2;
   pub get_color_0, _: 1,0;
+}
+
+impl GbPalette {
+    pub fn get_color(self, color: u8, is_sprite: bool) -> (u8, u8, u8, bool) {
+        match color {
+            0 if is_sprite => (0, 0, 0, false),
+            0 => DEFAULT_COLORS[self.get_color_0() as usize],
+            1 => DEFAULT_COLORS[self.get_color_1() as usize],
+            2 => DEFAULT_COLORS[self.get_color_2() as usize],
+            3 => DEFAULT_COLORS[self.get_color_3() as usize],
+            _ => panic!("Invalid color: {}", color)
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -216,6 +239,10 @@ impl VideoController {
         self.lcd_control.contains(LCDControlRegister::BGDisplay)
     }
 
+    pub fn are_sprites_enabled(&self) -> bool {
+        self.lcd_control.contains(LCDControlRegister::ObjDisplay)
+    }
+
     pub fn get_tile_pattern_table_addr(&self) -> u16 {
         if self
             .lcd_control
@@ -279,7 +306,7 @@ impl VideoController {
                 self.rendering_state.clock = 0;
                 self.rendering_state.line += 1;
 
-                if self.rendering_state.line == 144 {
+                if self.rendering_state.line == SCREEN_HEIGHT as u8 {
                     self.rendering_state.mode = RenderingMode::Vblank;
                     InternalMessage::TriggerInterrupt(Interrupt::LCDVBlank)
                 } else {

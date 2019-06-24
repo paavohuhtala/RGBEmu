@@ -1,6 +1,10 @@
 pub const GB_CYCLES_PER_SEC: u32 = 4194000;
 pub const GB_FRAME_RATE: f64 = 59.7;
 
+pub const SCREEN_WIDTH: u32 = 160;
+pub const SCREEN_HEIGHT: u32 = 144;
+pub const TILE_SIZE: usize = 8;
+
 pub const RAM_BANK_SIZE: usize = 4096;
 pub const VRAM_BANK_SIZE: usize = 8192;
 pub const CARTRIDGE_RAM_BANK_SIZE: usize = 8192;
